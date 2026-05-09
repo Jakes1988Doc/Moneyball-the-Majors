@@ -27,8 +27,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .wrap{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:0 32px 120px}
 
 /* ── HEADER ── */
-header{padding:52px 0 44px;border-bottom:.5px solid var(--bdr);margin-bottom:48px}
-.header-inner{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap}
+header{padding:52px 0 52px;border-bottom:.5px solid var(--bdr);margin-bottom:36px}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap}
 .eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:12px}
 .eyebrow::before{content:'';width:32px;height:.5px;background:var(--gold);display:block}
 h1{font-family:'Playfair Display',serif;font-size:clamp(28px,4.8vw,62px);font-weight:900;line-height:1.02;color:var(--cream);letter-spacing:-.024em}
@@ -44,8 +44,7 @@ h1 .hl{color:var(--gold2);font-style:italic}
 .spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border:.5px solid var(--bdrb);border-radius:20px;color:var(--gold2);background:rgba(201,168,76,.08);letter-spacing:.04em}
 
 /* ── MAJOR NAV ── */
-.major-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:44px}
-@media(max-width:720px){.major-nav{grid-template-columns:repeat(2,1fr)}}
+.major-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .mbtn{position:relative;background:var(--cbg);border:.5px solid var(--bdr);border-radius:8px;padding:20px 18px 18px;cursor:pointer;text-align:left;overflow:hidden;transition:all .22s}
 .mbtn::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .3s}
 .mbtn:hover{background:var(--cbgh);border-color:var(--bdrb)}
@@ -261,32 +260,33 @@ footer{border-top:.5px solid var(--bdr);padding:28px 0 0;margin-top:56px;display
       </div>
     </div>
 
+    <!-- MAJOR NAV — 2×2 quadrant in header right -->
+    <nav class="major-nav" id="majorNav" style="flex:0 0 auto;width:min(420px,45vw);align-self:center">
+      <button class="mbtn active" onclick="setMajor('masters')">
+        <div class="mbtn-tag">April · Augusta</div>
+        <div class="mbtn-name">The Masters</div>
+        <div class="mbtn-venue">Augusta National GC</div>
+      </button>
+      <button class="mbtn" onclick="setMajor('pgachamp')">
+        <div class="mbtn-tag">May · Aronimink 2026</div>
+        <div class="mbtn-name">PGA Championship</div>
+        <div class="mbtn-venue">Newtown Square, PA</div>
+      </button>
+      <button class="mbtn" onclick="setMajor('usopen')">
+        <div class="mbtn-tag">June · Various</div>
+        <div class="mbtn-name">US Open</div>
+        <div class="mbtn-venue">USGA Championship</div>
+      </button>
+      <button class="mbtn" onclick="setMajor('theopen')">
+        <div class="mbtn-tag">July · Links</div>
+        <div class="mbtn-name">The Open</div>
+        <div class="mbtn-venue">Links courses, UK</div>
+      </button>
+    </nav>
   </div>
 </header>
 
-<!-- MAJOR NAV -->
-<nav class="major-nav" id="majorNav">
-  <button class="mbtn active" onclick="setMajor('masters')">
-    <div class="mbtn-tag">April · Augusta</div>
-    <div class="mbtn-name">The Masters</div>
-    <div class="mbtn-venue">Augusta National GC</div>
-  </button>
-  <button class="mbtn" onclick="setMajor('usopen')">
-    <div class="mbtn-tag">June · Various</div>
-    <div class="mbtn-name">US Open</div>
-    <div class="mbtn-venue">USGA Championship</div>
-  </button>
-  <button class="mbtn" onclick="setMajor('theopen')">
-    <div class="mbtn-tag">July · Links</div>
-    <div class="mbtn-name">The Open</div>
-    <div class="mbtn-venue">Links courses, UK</div>
-  </button>
-  <button class="mbtn" onclick="setMajor('pgachamp')">
-    <div class="mbtn-tag">May · Aronimink 2026</div>
-    <div class="mbtn-name">PGA Championship</div>
-    <div class="mbtn-venue">Newtown Square, PA</div>
-  </button>
-</nav>
+
 
 <!-- TABS -->
 <div class="tab-bar">
