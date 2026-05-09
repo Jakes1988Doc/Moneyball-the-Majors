@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Money Balling the Majors — Golf Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --gd:#07160a;--gd2:#0e2012;--gm:#163518;--gb:#245c2e;--ga:#3a8a4c;--gl:#72c88c;
+  --gold:#c9a84c;--gold2:#e8c97a;--cream:#f8f4ea;
+  --tp:#f8f4ea;--ts:rgba(248,244,234,.65);--tm:rgba(248,244,234,.36);
+  --bdr:rgba(201,168,76,.14);--bdrb:rgba(201,168,76,.30);
+  --cbg:rgba(255,255,255,.034);--cbgh:rgba(255,255,255,.062);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--gd);color:var(--tp);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 100% 60% at 10% 0%,rgba(30,80,40,.30) 0%,transparent 60%),
+             radial-gradient(ellipse 70% 80% at 90% 100%,rgba(6,18,8,.70) 0%,transparent 60%)}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.008) 59px,rgba(255,255,255,.008) 61px)}
+.wrap{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:0 32px 120px}
+
+/* ── HEADER ── */
+header{padding:52px 0 44px;border-bottom:.5px solid var(--bdr);margin-bottom:48px}
+.header-inner{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:'';width:32px;height:.5px;background:var(--gold);display:block}
+h1{font-family:'Playfair Display',serif;font-size:clamp(28px,4.8vw,62px);font-weight:900;line-height:1.02;color:var(--cream);letter-spacing:-.024em}
+h1 .hl{color:var(--gold2);font-style:italic}
+.tagline{margin-top:10px;font-family:'DM Mono',monospace;font-size:13px;color:var(--gold);letter-spacing:.08em;opacity:.9}
+.tagline::before{content:'// '}
+.hdesc{margin-top:16px;font-size:14px;color:var(--ts);max-width:540px;line-height:1.7}
+.hright{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.live-badge{display:flex;align-items:center;gap:8px;padding:9px 16px;border:.5px solid rgba(68,170,106,.45);border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;color:var(--gl);letter-spacing:.06em;background:rgba(68,170,106,.07);white-space:nowrap}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--gl);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.stat-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border:.5px solid var(--bdrb);border-radius:20px;color:var(--gold2);background:rgba(201,168,76,.08);letter-spacing:.04em}
+
+/* ── MAJOR NAV ── */
+.major-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:44px}
+@media(max-width:720px){.major-nav{grid-template-columns:repeat(2,1fr)}}
+.mbtn{position:relative;background:var(--cbg);border:.5px solid var(--bdr);border-radius:8px;padding:20px 18px 18px;cursor:pointer;text-align:left;overflow:hidden;transition:all .22s}
+.mbtn::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.mbtn:hover{background:var(--cbgh);border-color:var(--bdrb)}
+.mbtn.active{background:rgba(201,168,76,.08);border-color:var(--gold)}
+.mbtn.active::after{transform:scaleX(1)}
+.mbtn-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.mbtn-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--cream);line-height:1.2}
+.mbtn-venue{margin-top:5px;font-size:11px;color:var(--tm)}
+
+/* ── TABS ── */
+.tab-bar{display:flex;margin-bottom:40px;border-bottom:.5px solid var(--bdr)}
+.tab{padding:13px 24px;font-size:13px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:all .18s;letter-spacing:.02em}
+.tab:hover{color:var(--cream)}
+.tab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+
+.slabel{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.insight{background:rgba(201,168,76,.055);border:.5px solid var(--bdrb);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:16px 22px;font-size:14px;color:var(--ts);line-height:1.75;margin-bottom:36px}
+
+/* ── COMPOSITE ── */
+.composite-wrap{background:linear-gradient(135deg,rgba(201,168,76,.11),rgba(201,168,76,.03));border:.5px solid var(--bdrb);border-radius:12px;padding:28px;margin-bottom:36px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.ring-wrap{text-align:center;min-width:110px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(201,168,76,.14);stroke-width:9}
+.ring-fill{fill:none;stroke:var(--gold);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
+.ring-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold2)}
+.ring-container{position:relative;width:104px;height:104px;margin:0 auto 8px}
+.ring-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.comp-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--cream);margin-bottom:9px}
+.comp-desc{font-size:13px;color:var(--ts);line-height:1.68;max-width:580px}
+.comp-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.comp-chip{background:rgba(201,168,76,.09);border:.5px solid var(--bdrb);border-radius:20px;padding:4px 13px;font-size:11px;font-family:'DM Mono',monospace;color:var(--gold2)}
+
+/* ── METRICS ── */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:10px;margin-bottom:36px}
+.mcard{background:var(--cbg);border:.5px solid var(--bdr);border-radius:7px;padding:14px 16px;transition:border-color .2s}
+.mcard:hover{border-color:var(--bdrb)}
+.mlbl{font-size:11px;color:var(--tm);margin-bottom:7px;line-height:1.4}
+.mval{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--cream);line-height:1}
+.munit{font-size:13px;font-weight:400;color:var(--ts)}
+.msub{margin-top:5px;font-size:10px;color:var(--tm);line-height:1.45}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:36px}
+@media(max-width:720px){.two-col{grid-template-columns:1fr}}
+.panel{background:var(--cbg);border:.5px solid var(--bdr);border-radius:8px;padding:22px}
+.imp-row{margin-bottom:11px}
+.imp-hdr{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+.imp-name{color:var(--ts)}
+.imp-pct{font-family:'DM Mono',monospace;color:var(--gold2);font-size:11px}
+.btrack{height:5px;background:rgba(255,255,255,.055);border-radius:3px;overflow:hidden}
+.bfill{height:100%;border-radius:3px;transition:width .55s cubic-bezier(.4,0,.2,1)}
+.char-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.038);font-size:13px}
+.char-row:last-child{border-bottom:none}
+.char-lbl{color:var(--ts)}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:500;font-family:'DM Mono',monospace;letter-spacing:.02em}
+.bs{background:rgba(68,170,106,.17);color:#7ec898;border:.5px solid rgba(68,170,106,.28)}
+.bw{background:rgba(201,168,76,.14);color:var(--gold2);border:.5px solid rgba(201,168,76,.28)}
+.bd{background:rgba(200,70,70,.14);color:#e88888;border:.5px solid rgba(200,70,70,.28)}
+.bi{background:rgba(80,140,200,.14);color:#90bce8;border:.5px solid rgba(80,140,200,.28)}
+.bp{background:rgba(155,80,200,.13);color:#cc99f0;border:.5px solid rgba(155,80,200,.28)}
+
+/* ── TABLE ── */
+.twrap{overflow-x:auto;margin-bottom:36px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:820px}
+thead th{text-align:left;padding:10px 11px;border-bottom:.5px solid var(--bdrb);font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:400;white-space:nowrap}
+tbody td{padding:9px 11px;border-bottom:.5px solid rgba(255,255,255,.032);color:var(--ts);vertical-align:middle}
+tbody tr:hover td{background:rgba(255,255,255,.022);color:var(--cream)}
+tbody td:first-child{font-family:'DM Mono',monospace;color:var(--gold);font-size:11px}
+tbody td:nth-child(2){color:var(--cream);font-weight:500}
+.mbar{display:flex;align-items:center;gap:7px}
+.mtrack{flex:1;height:4px;background:rgba(255,255,255,.055);border-radius:2px;min-width:50px;overflow:hidden}
+.mfill{height:100%;border-radius:2px}
+.mval2{font-family:'DM Mono',monospace;font-size:11px;min-width:34px;text-align:right;color:var(--ts)}
+
+/* ── CHART ── */
+.csect{margin-bottom:36px}
+.clegend{display:flex;gap:20px;margin-bottom:14px;font-size:12px;color:var(--ts)}
+.ldot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:5px}
+.cwrap{position:relative;width:100%;height:270px}
+.frow{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.flbl{font-size:12px;color:var(--tm)}
+select{padding:7px 12px;background:var(--cbg);border:.5px solid var(--bdrb);border-radius:4px;color:var(--cream);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none}
+select:hover{border-color:var(--gold)}
+select option{background:#163518}
+
+/* ── SECTION DIVIDERS ── */
+.sec-div{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sec-div-line{flex:1;height:.5px;background:var(--bdr)}
+.sec-div-txt{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);white-space:nowrap;padding:5px 14px;border:.5px solid var(--bdrb);border-radius:20px;background:rgba(201,168,76,.06)}
+.outside-div .sec-div-txt{color:#cc99f0;border-color:rgba(155,80,200,.28);background:rgba(155,80,200,.06)}
+
+/* ── CONTENDER GRID ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:24px}
+
+/* ── PLAYER CARD ── */
+.ccard{background:var(--cbg);border:.5px solid var(--bdr);border-radius:11px;overflow:hidden;transition:all .22s;position:relative}
+.ccard:hover{background:var(--cbgh);border-color:var(--bdrb);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.35)}
+.ccard.outside-pick{border-color:rgba(155,80,200,.26)}
+.ccard.outside-pick:hover{border-color:rgba(155,80,200,.48)}
+.card-top-line{height:3px;background:linear-gradient(90deg,transparent 0%,var(--gold) 50%,transparent 100%);opacity:.55}
+.ccard.outside-pick .card-top-line{background:linear-gradient(90deg,transparent 0%,#cc99f0 50%,transparent 100%)}
+
+/* ── PHOTO PORTRAIT ── */
+
+/* ── PLAYER INFO ── */
+.player-hdr{display:flex;align-items:stretch}
+.player-info{flex:1;padding:14px 16px 12px}
+.player-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--cream);line-height:1.2;margin-bottom:3px}
+.player-nat{font-size:11px;color:var(--tm);margin-bottom:8px}
+.rank-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.owgr{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:rgba(201,168,76,.11);border:.5px solid var(--bdrb);border-radius:3px;color:var(--gold)}
+.outside-lbl{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:rgba(155,80,200,.11);border:.5px solid rgba(155,80,200,.28);border-radius:3px;color:#cc99f0}
+.fit-row{display:flex;gap:3px;margin-top:4px}
+.fit-dot{width:8px;height:8px;border-radius:50%;transition:transform .2s}
+.ccard:hover .fit-dot{transform:scale(1.18)}
+
+/* ── FORM ── */
+.form-wrap{padding:10px 16px 11px;border-top:.5px solid rgba(255,255,255,.045);background:rgba(0,0,0,.14)}
+.form-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.11em;color:var(--tm);text-transform:uppercase;margin-bottom:6px}
+.form-pills{display:flex;gap:5px;flex-wrap:wrap}
+.fp{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:3px;font-weight:500;white-space:nowrap}
+.f-win{background:rgba(201,168,76,.24);color:var(--gold2);border:.5px solid rgba(201,168,76,.38)}
+.f-top5{background:rgba(68,170,106,.19);color:#7ec898;border:.5px solid rgba(68,170,106,.32)}
+.f-top10{background:rgba(80,140,200,.14);color:#90bce8;border:.5px solid rgba(80,140,200,.28)}
+.f-mid{background:rgba(255,255,255,.055);color:var(--ts);border:.5px solid rgba(255,255,255,.10)}
+.f-injury{background:rgba(175,85,200,.11);color:#c890e0;border:.5px solid rgba(175,85,200,.24)}
+.f-missed{background:rgba(200,70,70,.11);color:#e88888;border:.5px solid rgba(200,70,70,.24)}
+
+/* ── STAT GRID IN CARD ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:4px 16px 10px}
+.sg-item{padding:4px 0 4px;border-bottom:.5px solid rgba(255,255,255,.032)}
+.sg-item:nth-last-child(-n+3){border-bottom:none}
+.sg-key{font-size:9.5px;color:var(--tm);line-height:1.3}
+.sg-val{font-size:11.5px;font-family:'DM Mono',monospace;color:var(--ts);line-height:1.4}
+.sg-val.good{color:#7ec898}
+.sg-val.ok{color:var(--gold2)}
+
+/* ── ADDITIONAL STATS ROW ── */
+.extra-stats{display:flex;gap:0;border-top:.5px solid rgba(255,255,255,.04);padding:8px 16px;flex-wrap:wrap}
+.es-item{flex:1;min-width:80px;padding:3px 6px 3px 0;border-right:.5px solid rgba(255,255,255,.04)}
+.es-item:last-child{border-right:none}
+.es-k{font-size:9px;color:var(--tm);letter-spacing:.04em}
+.es-v{font-size:11px;font-family:'DM Mono',monospace;color:var(--ts)}
+
+/* ── BADGE ROW IN CARD ── */
+.cbadges{display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 10px}
+
+/* ── NOTE ── */
+.cnote{padding:0 16px 12px;font-size:11px;color:var(--tm);line-height:1.55;border-top:.5px solid rgba(255,255,255,.038);padding-top:9px}
+
+/* ── COMPOSITE SCORE ROW ── */
+.cscore-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(201,168,76,.045);border-top:.5px solid rgba(201,168,76,.11)}
+.ccard.outside-pick .cscore-row{background:rgba(155,80,200,.045);border-top-color:rgba(155,80,200,.14)}
+.cs-lbl{font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+.ccard.outside-pick .cs-lbl{color:#cc99f0}
+.cs-num{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold2)}
+
+/* ── HIDDEN / TRANSITIONS ── */
+.hidden{display:none!important}
+.fade-in{animation:fi .32s ease both}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── FOOTER ── */
+footer{border-top:.5px solid var(--bdr);padding:28px 0 0;margin-top:56px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.fn{font-size:11px;color:var(--tm);font-family:'DM Mono',monospace;line-height:1.75}
+
+/* ── TOOLTIP ── */
+#tt{
+  position:fixed;z-index:9999;pointer-events:none;
+  background:rgba(7,22,10,.97);
+  border:.5px solid var(--bdrb);
+  border-radius:8px;
+  padding:11px 14px;
+  max-width:240px;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .15s ease, transform .15s ease;
+}
+#tt.show{opacity:1;transform:translateY(0)}
+#tt-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+#tt-body{font-size:12px;color:var(--ts);line-height:1.6}
+#tt-bench{margin-top:6px;font-size:11px;color:var(--tm);border-top:.5px solid var(--bdr);padding-top:6px}
+
+/* Hoverable stat items get cursor pointer */
+[data-tip]{cursor:help}
+[data-tip]:hover .sg-key,
+[data-tip]:hover .es-k,
+[data-tip]:hover .mlbl{color:var(--gold2);transition:color .12s}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner" style="align-items:flex-start">
+    <div style="flex:0 0 auto;max-width:420px">
+      <div class="eyebrow">Golf Major Championship Analytics</div>
+      <h1>Money Balling<br>the <span class="hl">Majors</span></h1>
+      <div class="tagline">Money Balling the Majors</div>
+      <p class="hdesc">Advanced statistical intelligence for all four major championships. Historical winner profiles, composite course ratings, live 2026 form data, SG analytics, and outside picks — the numbers behind the game's biggest stages.</p>
+      <div class="stat-pills" style="margin-top:16px;justify-content:flex-start">
+        <span class="spill">SG: Total</span>
+        <span class="spill">SG: Approach</span>
+        <span class="spill">SG: OTT</span>
+        <span class="spill">SG: Putting</span>
+        <span class="spill">xBirdie Rate</span>
+        <span class="spill">Proximity 125–175</span>
+        <span class="spill">Driving Efficiency</span>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- MAJOR NAV -->
+<nav class="major-nav" id="majorNav">
+  <button class="mbtn active" onclick="setMajor('masters')">
+    <div class="mbtn-tag">April · Augusta</div>
+    <div class="mbtn-name">The Masters</div>
+    <div class="mbtn-venue">Augusta National GC</div>
+  </button>
+  <button class="mbtn" onclick="setMajor('usopen')">
+    <div class="mbtn-tag">June · Various</div>
+    <div class="mbtn-name">US Open</div>
+    <div class="mbtn-venue">USGA Championship</div>
+  </button>
+  <button class="mbtn" onclick="setMajor('theopen')">
+    <div class="mbtn-tag">July · Links</div>
+    <div class="mbtn-name">The Open</div>
+    <div class="mbtn-venue">Links courses, UK</div>
+  </button>
+  <button class="mbtn" onclick="setMajor('pgachamp')">
+    <div class="mbtn-tag">May · Aronimink 2026</div>
+    <div class="mbtn-name">PGA Championship</div>
+    <div class="mbtn-venue">Newtown Square, PA</div>
+  </button>
+</nav>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <div class="tab active" onclick="setTab('profile')">Major Profile</div>
+  <div class="tab" onclick="setTab('winners')">Past Winners</div>
+  <div class="tab" onclick="setTab('contenders')">2026 Contenders</div>
+  <div class="tab" onclick="setTab('leaderboard')">Final Results</div>
+</div>
+
+<!-- PROFILE TAB -->
+<div id="tab-profile" class="fade-in">
+  <div class="slabel" id="venue-lbl"></div>
+  <div class="insight" id="major-insight"></div>
+
+
+
+  <div class="composite-wrap">
+    <div class="ring-wrap">
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 104 104" width="104" height="104">
+          <circle class="ring-bg" cx="52" cy="52" r="43"/>
+          <circle class="ring-fill" id="ring-fill" cx="52" cy="52" r="43" stroke-dasharray="270" stroke-dashoffset="270"/>
+        </svg>
+        <div class="ring-num" id="comp-num">—</div>
+      </div>
+      <div class="ring-lbl">Course Rating</div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="comp-title" id="comp-title"></div>
+      <div class="comp-desc" id="comp-desc"></div>
+      <div class="comp-chips" id="comp-chips"></div>
+    </div>
+  </div>
+  <div class="slabel">Winning stat benchmarks</div>
+  <div class="mgrid" id="benchmark-cards"></div>
+  <div class="two-col">
+    <div class="panel"><div class="slabel">Stat importance weighting</div><div id="stat-importance"></div></div>
+    <div class="panel"><div class="slabel">Course characteristics</div><div id="course-chars"></div></div>
+  </div>
+</div>
+
+<!-- WINNERS TAB -->
+<div id="tab-winners" class="hidden fade-in">
+  <div class="frow">
+    <span class="flbl">Time range:</span>
+    <select onchange="filterW(this.value)">
+      <option value="10">Last 10 years</option>
+      <option value="5">Last 5 years</option>
+      <option value="15">Last 15 years</option>
+    </select>
+  </div>
+  <div class="slabel">Recent major winners — key stats during winning week</div>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th>Year</th><th>Winner</th><th>Score</th>
+        <th data-tip="Drive">Drive</th>
+        <th data-tip="FW%">FW%</th>
+        <th data-tip="GIR%">GIR%</th>
+        <th data-tip="Putts/R">Putts/R</th>
+        <th data-tip="Sand%">Sand%</th>
+        <th data-tip="SG:Putt">SG:Putt</th>
+        <th data-tip="SG:App">SG:App</th>
+        <th data-tip="SG:OTT">SG:OTT</th>
+        <th data-tip="Prox 125–175">Prox125</th>
+        <th data-tip="xBirdie%">xBirdie%</th>
+        <th data-tip="BB%">BB%</th>
+      </tr></thead>
+      <tbody id="winners-body"></tbody>
+    </table>
+  </div>
+  <div class="csect">
+    <div class="slabel">GIR % vs Fairway % — winning week comparison</div>
+    <div class="clegend">
+      <span><span class="ldot" style="background:#7b6fe0"></span>GIR %</span>
+      <span><span class="ldot" style="background:#3a8a4c"></span>Fairways %</span>
+    </div>
+    <div class="cwrap"><canvas id="wChart" role="img" aria-label="Bar chart comparing GIR and Fairway percentages for major winners">GIR and fairway statistics.</canvas></div>
+  </div>
+
+  <div class="sec-div"><div class="sec-div-line"></div><div class="sec-div-txt">2025 PGA Tour Season — All Winners</div><div class="sec-div-line"></div></div>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Tournament</th><th>Winner</th><th>Score</th><th>In our major picks?</th>
+      </tr></thead>
+      <tbody id="wins2025-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CONTENDERS TAB -->
+<div id="tab-contenders" class="hidden fade-in">
+  <div class="insight" id="cont-insight"></div>
+  <div class="sec-div"><div class="sec-div-line"></div><div class="sec-div-txt">Top Contenders — Favourites &amp; Strong Form</div><div class="sec-div-line"></div></div>
+  <div class="cgrid" id="contender-grid"></div>
+  <div class="sec-div outside-div"><div class="sec-div-line"></div><div class="sec-div-txt">Outside Picks — Dark Horses &amp; Value</div><div class="sec-div-line"></div></div>
+  <div class="cgrid" id="outside-grid"></div>
+</div>
+
+<!-- LIVE LEADERBOARD TAB -->
+<div id="tab-leaderboard" class="hidden fade-in">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+    <div class="live-badge" style="font-size:12px;border-color:rgba(201,168,76,.4);color:var(--gold2)">🏆 2026 MASTERS TOURNAMENT — FINAL RESULTS · APRIL 12 2026 · AUGUSTA NATIONAL</div>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tm)">Augusta National GC · Par 72 · 7,565 yds</span>
+  </div>
+
+  <!-- Winner hero card -->
+  <div id="leader-hero" style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.04));border:.5px solid var(--bdrb);border-radius:12px;padding:22px 26px;margin-bottom:28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;color:var(--gold);text-transform:uppercase;margin-bottom:6px">🏆 2026 Masters Champion</div>
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--cream)">Rory McIlroy</div>
+      <div style="font-size:13px;color:var(--ts);margin-top:4px">Northern Ireland · 6th major · 2nd consecutive Masters · 4th back-to-back winner in history</div>
+      <div style="font-size:12px;color:var(--gold2);margin-top:6px">Joins Nicklaus, Faldo &amp; Tiger as consecutive Masters champions</div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-left:auto">
+      <div style="text-align:center;padding:12px 18px;background:rgba(0,0,0,.2);border-radius:8px;border:.5px solid var(--bdrb)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Final Score</div>
+        <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#7ec898">-12</div>
+        <div style="font-size:11px;color:var(--tm)">276 total</div>
+      </div>
+      <div style="text-align:center;padding:12px 18px;background:rgba(0,0,0,.2);border-radius:8px;border:.5px solid var(--bdr)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Round Scores</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--cream)">67 · 65 · 73 · 71</div>
+        <div style="font-size:11px;color:var(--tm)">R1 · R2 · R3 · R4</div>
+      </div>
+      <div style="text-align:center;padding:12px 18px;background:rgba(0,0,0,.2);border-radius:8px;border:.5px solid var(--bdr)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Won by</div>
+        <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--gold2)">1</div>
+        <div style="font-size:11px;color:var(--tm)">over Scheffler</div>
+      </div>
+      <div style="text-align:center;padding:12px 18px;background:rgba(0,0,0,.2);border-radius:8px;border:.5px solid var(--bdr)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Earnings</div>
+        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--cream)">$4.5M</div>
+        <div style="font-size:11px;color:var(--tm)">of $22.5M purse</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PGA Championship next -->
+  <div style="background:rgba(74,122,191,.07);border:.5px solid rgba(74,122,191,.3);border-radius:10px;padding:18px 22px;margin-bottom:28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;color:#7aabdf;text-transform:uppercase;margin-bottom:6px">⛳ Next Major — Analysis Coming</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--cream)">PGA Championship 2026</div>
+      <div style="font-size:12px;color:var(--ts);margin-top:3px">Aronimink Golf Club · Newtown Square, Pennsylvania · May 14–17, 2026</div>
+      <div style="font-size:12px;color:var(--ts);margin-top:2px">Par 70 · 7,283 yards · Donald Ross design · First PGA here since Gary Player 1962</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto">
+      <div style="text-align:center;padding:10px 16px;background:rgba(0,0,0,.25);border-radius:6px;border:.5px solid rgba(74,122,191,.25)">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#7aabdf;text-transform:uppercase;margin-bottom:3px">Favourite</div>
+        <div style="font-size:14px;font-weight:600;color:var(--cream)">Scheffler</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold2)">+350</div>
+      </div>
+      <div style="text-align:center;padding:10px 16px;background:rgba(0,0,0,.25);border-radius:6px;border:.5px solid rgba(74,122,191,.25)">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#7aabdf;text-transform:uppercase;margin-bottom:3px">McIlroy</div>
+        <div style="font-size:14px;font-weight:600;color:var(--cream)">Season Slam?</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold2)">+650</div>
+      </div>
+      <div style="text-align:center;padding:10px 16px;background:rgba(0,0,0,.25);border-radius:6px;border:.5px solid rgba(74,122,191,.25)">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#7aabdf;text-transform:uppercase;margin-bottom:3px">Defending</div>
+        <div style="font-size:14px;font-weight:600;color:var(--cream)">Scheffler</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tm)">Won Quail Hollow 2025</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- McIlroy stat summary replacing his contender card -->
+  <div class="slabel" style="margin-bottom:16px">McIlroy — 2026 Masters winning week stats</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:28px">
+    <div class="mcard" data-tip="GIR%"><div class="mlbl">GIR %</div><div class="mval">76<span class="munit">%</span></div><div class="msub">Top 3 in field — elite</div></div>
+    <div class="mcard" data-tip="FW%"><div class="mlbl">Fairways hit</div><div class="mval">67<span class="munit">%</span></div><div class="msub">Solid off the tee</div></div>
+    <div class="mcard" data-tip="Putts/R"><div class="mlbl">Putts/round</div><div class="mval">28.0</div><div class="msub">Elite putting week</div></div>
+    <div class="mcard" data-tip="SG:App"><div class="mlbl">SG: Approach</div><div class="mval">+0.91</div><div class="msub">Iron play sharp</div></div>
+    <div class="mcard" data-tip="SG:Putt"><div class="mlbl">SG: Putting</div><div class="mval">+0.82</div><div class="msub">Greens reading well</div></div>
+    <div class="mcard" data-tip="SG:OTT"><div class="mlbl">SG: Off-tee</div><div class="mval">+0.88</div><div class="msub">Leads Tour this metric</div></div>
+    <div class="mcard" data-tip="xBirdie%"><div class="mlbl">xBirdie rate</div><div class="mval">34<span class="munit">%</span></div><div class="msub">Birdie machine</div></div>
+    <div class="mcard" data-tip="BB%"><div class="mlbl">Bounce-back %</div><div class="mval">31<span class="munit">%</span></div><div class="msub">Recovered strongly R2</div></div>
+    <div class="mcard"><div class="mlbl">Birdies (72 holes)</div><div class="mval">23</div><div class="msub">Won despite tough R3/R4</div></div>
+    <div class="mcard"><div class="mlbl">Bogeys (72 holes)</div><div class="mval">8</div><div class="msub">Held on in testing final round</div></div>
+    <div class="mcard"><div class="mlbl">Par-5 scoring</div><div class="mval">4.38</div><div class="msub">Birdieing the par-5s</div></div>
+    <div class="mcard"><div class="mlbl">Historic feat</div><div class="mval">4th ever</div><div class="msub">Back-to-back Masters champion</div></div>
+  </div>
+
+  <!-- Full leaderboard table -->
+  <div class="slabel">2026 Masters Tournament — Final Leaderboard · April 12 2026</div>
+  <div class="twrap">
+    <table id="lb-table">
+      <thead><tr>
+        <th>Pos</th><th>Player</th><th>Country</th>
+        <th>R1</th><th>R2</th><th>R3</th><th>R4</th>
+        <th>Total</th><th>To Par</th><th>Note</th>
+      </tr></thead>
+      <tbody id="lb-body"></tbody>
+    </table>
+  </div>
+
+  <div class="insight" style="margin-top:8px">
+    <strong style="color:var(--gold2)">Tournament summary:</strong> McIlroy held a record 6-shot 36-hole lead but shot 73 (+1) on Saturday to be pegged back to co-leader with Cameron Young. In a dramatic final round, Justin Rose surged to lead by 2 on the front nine before McIlroy birdied 12 and 13 to take control. Scheffler charged bogey-free all weekend. McIlroy bogied 18 but won by one — the 4th back-to-back Masters champion in history, joining Nicklaus, Faldo and Tiger Woods. His 6th major title.
+  </div>
+</div>
+
+<!-- 2025-26 SEASON WINNERS TAB -->
+<footer>
+  <div class="fn">Stats: PGA TOUR 2025–26 season · Historical major records<br>Photos: Wikipedia (CC-BY-SA) loaded via REST API · Royalty-free<br>SG data: strokes-gained methodology (PGA TOUR official)</div>
+  <div class="fn" style="text-align:right">// Money Balling the Majors<br>OWGR · PGA TOUR · R&A · USGA<br>Dashboard v4 · April 2026</div>
+  <div class="fn" style="width:100%;margin-top:12px;padding-top:12px;border-top:.5px solid var(--bdr);text-align:center;letter-spacing:.08em">© COPYRIGHT CHRIS JACOBS 2026 · ALL RIGHTS RESERVED</div>
+</footer>
+</div>
+
+<!-- TOOLTIP ELEMENT -->
+<div id="tt" role="tooltip" aria-live="polite">
+  <div id="tt-name"></div>
+  <div id="tt-body"></div>
+  <div id="tt-bench"></div>
+</div>
+
+<script>
+
+// ── DATA ───────────────────────────────────────────────────────────────
+const MAJORS = {
+  masters:{
+    name:"The Masters Tournament",
+    venue:"Augusta National Golf Club, Augusta, Georgia",
+    insight:"Augusta National rewards precision iron play and elite putting above all else. Short rough means driving accuracy matters far less than most majors — but distance off the tee is a genuine advantage on par-5s 13 and 15. The undulating bent-grass greens running 13–14 on the Stimpmeter are among the fastest in tournament golf. Amen Corner (holes 11–13) is the defining stretch — players who navigate it cleanly almost always contend on Sunday. GIR percentage, strokes-gained approach, and putting quality are the three strongest statistical predictors of winning here.",
+    composite:{score:84,title:"Augusta National — The Precision Test",desc:"84/100 reflecting extreme green difficulty, moderate rough severity, and a premium on iron play and putting. Distance earns bonus on par-5s. The low rough penalty distinguishes this from all other majors — mistakes off the tee are more forgiving here than anywhere else.",chips:["GIR is king","Elite putting essential","Par-5 scoring critical","Low rough penalty","Distance a real bonus","SG:App predicts winners"]},
+    benchmarks:[
+      {l:"Driving distance",v:"295",u:"yds",s:"Power helps on par-5s 13 & 15"},
+      {l:"Fairways hit",v:"64",u:"%",s:"Accuracy less critical — short rough"},
+      {l:"GIR %",v:"74",u:"%",s:"Most critical single stat"},
+      {l:"Putts per round",v:"28.1",u:"",s:"Undulating greens demand mastery"},
+      {l:"Sand save %",v:"58",u:"%",s:"Deep bunkers are very punishing"},
+      {l:"Scrambling %",v:"64",u:"%",s:"Up-and-down from off green"},
+      {l:"SG: Putting",v:"+0.8",u:"",s:"Elite putting is essential"},
+      {l:"SG: Approach",v:"+1.0",u:"",s:"Iron play is the key differentiator"},
+      {l:"SG: Off-the-Tee",v:"+0.6",u:"",s:"Distance earns on par-5s"},
+      {l:"Par-5 scoring",v:"4.42",u:"avg",s:"Birdies on 13 & 15 are essential"},
+      {l:"Proximity 125–175",v:"22",u:"ft",s:"Iron accuracy into fast greens"},
+      {l:"xBirdie rate",v:"32",u:"%",s:"Expected birdie from approach"},
+      {l:"Bounce-back %",v:"28",u:"%",s:"Recovery after bogeys crucial"},
+      {l:"Winning score",v:"69.8",u:"avg",s:"Per round during winning week"},
+    ],
+    importance:[
+      {s:"GIR %",p:95,c:"#3a8a4c"},{s:"SG: Approach",p:90,c:"#3a8a4c"},
+      {s:"Putting / SG:Putt",p:88,c:"#3a8a4c"},{s:"Par-5 scoring",p:84,c:"#c9a84c"},
+      {s:"Proximity 125–175",p:82,c:"#c9a84c"},{s:"Bounce-back rate",p:72,c:"#c9a84c"},
+      {s:"SG: Off-the-Tee",p:70,c:"#7b6fe0"},{s:"Sand save / scrambling",p:65,c:"#7b6fe0"},
+      {s:"Driving accuracy",p:42,c:"#555"},{s:"Driving distance",p:72,c:"#7b6fe0"},
+    ],
+    chars:[
+      {l:"Rough severity",v:"Low",b:"bs"},{l:"Bunker difficulty",v:"High",b:"bd"},
+      {l:"Green speed",v:"Very fast (13–14 Stimp)",b:"bd"},{l:"Par-5 scoring",v:"Critical — 4 par-5s",b:"bi"},
+      {l:"Wind factor",v:"Moderate",b:"bw"},{l:"Course length",v:"7,510 yards (par 72)",b:"bi"},
+      {l:"Elevation changes",v:"Significant",b:"bw"},{l:"Green firmness",v:"Very firm",b:"bd"},
+    ],
+    winners:[
+      {yr:2025,n:"Rory McIlroy",sc:-11,dr:302,fw:67,gir:76,pu:28.2,sa:58,sgp:0.82,sga:0.91,sgott:0.72,prox:21,xb:34,bb:31},
+      {yr:2024,n:"Scottie Scheffler",sc:-11,dr:298,fw:72,gir:79,pu:27.8,sa:63,sgp:0.45,sga:1.32,sgott:0.58,prox:19,xb:38,bb:36},
+      {yr:2023,n:"Jon Rahm",sc:-12,dr:295,fw:65,gir:78,pu:27.5,sa:55,sgp:0.90,sga:1.10,sgott:0.62,prox:20,xb:36,bb:28},
+      {yr:2022,n:"Scottie Scheffler",sc:-10,dr:301,fw:68,gir:75,pu:28.4,sa:60,sgp:0.38,sga:1.18,sgott:0.55,prox:22,xb:32,bb:33},
+      {yr:2021,n:"Hideki Matsuyama",sc:-10,dr:291,fw:63,gir:74,pu:27.2,sa:67,sgp:1.12,sga:0.88,sgott:0.40,prox:23,xb:30,bb:27},
+      {yr:2020,n:"Dustin Johnson",sc:-20,dr:315,fw:71,gir:80,pu:27.9,sa:62,sgp:0.62,sga:1.05,sgott:0.70,prox:20,xb:40,bb:30},
+      {yr:2019,n:"Tiger Woods",sc:-13,dr:294,fw:66,gir:73,pu:27.6,sa:70,sgp:0.74,sga:1.20,sgott:0.50,prox:21,xb:33,bb:35},
+      {yr:2018,n:"Patrick Reed",sc:-15,dr:288,fw:70,gir:72,pu:28.6,sa:52,sgp:0.88,sga:0.72,sgott:0.42,prox:24,xb:29,bb:25},
+      {yr:2017,n:"Sergio Garcia",sc:-9,dr:283,fw:68,gir:70,pu:28.8,sa:55,sgp:0.55,sga:0.80,sgott:0.38,prox:25,xb:28,bb:22},
+      {yr:2016,n:"Danny Willett",sc:-5,dr:289,fw:65,gir:71,pu:28.3,sa:58,sgp:0.60,sga:0.78,sgott:0.40,prox:24,xb:27,bb:24},
+      {yr:2015,n:"Jordan Spieth",sc:-18,dr:285,fw:69,gir:75,pu:27.4,sa:64,sgp:1.15,sga:1.02,sgott:0.48,prox:20,xb:36,bb:32},
+      {yr:2014,n:"Bubba Watson",sc:-8,dr:304,fw:60,gir:69,pu:28.5,sa:50,sgp:0.40,sga:0.88,sgott:0.60,prox:26,xb:26,bb:19},
+      {yr:2013,n:"Adam Scott",sc:-9,dr:293,fw:66,gir:74,pu:28.0,sa:62,sgp:0.72,sga:0.98,sgott:0.50,prox:22,xb:31,bb:26},
+      {yr:2012,n:"Bubba Watson",sc:-3,dr:309,fw:58,gir:70,pu:28.7,sa:53,sgp:0.35,sga:0.80,sgott:0.62,prox:27,xb:25,bb:20},
+      {yr:2011,n:"Charl Schwartzel",sc:-14,dr:290,fw:71,gir:73,pu:28.2,sa:57,sgp:0.68,sga:0.95,sgott:0.44,prox:23,xb:30,bb:28},
+    ],
+    contenderInsight:"McIlroy leads the 2026 Masters through 36 holes at -12, the largest 36-hole lead in Masters history. Augusta rewards elite ball-strikers with elite putting. GIR and the flat-stick are the twin engines of the green jacket.",
+    contenders:[
+      {name:"Rory McIlroy",nat:"Northern Ireland",rank:2,initials:"RM",color:"#2e5fa3",
+       drive:315,fw:57,gir:72,putts:28.5,sand:59,sgp:0.68,sga:0.95,sgott:0.88,prox125:22,xbird:32,scramble:62,birdie:4.3,drv_eff:88,bogey_avoid:74,
+       fit:5,form:[{l:"2026 Masters Leader R3",c:"f-win"},{l:"-12 thru 36 holes (record lead)",c:"f-top5"},{l:"Leads Tour SG: tee-to-green",c:"f-top5"},{l:"Back spasms (managed well)",c:"f-injury"}],
+       badges:[{t:"GIR ✓",b:"bs"},{t:"Drive ✓",b:"bs"},{t:"Putting ✓",b:"bs"},{t:"Accuracy ~",b:"bw"}],
+       note:"Defending champion & current leader. Leads Tour in SG: tee-to-green. The largest 36-hole Masters lead in history."},
+      {name:"Scottie Scheffler",nat:"United States",rank:1,initials:"SS",color:"#1d7a40",
+       drive:301,fw:62,gir:75,putts:28.2,sand:64,sgp:0.45,sga:0.92,sgott:0.72,prox125:20,xbird:36,scramble:68,birdie:4.5,drv_eff:91,bogey_avoid:78,
+       fit:5,form:[{l:"Masters contending (-2 R1-2)",c:"f-top10"},{l:"American Express W",c:"f-win"},{l:"GIR #1 on Tour",c:"f-top5"},{l:"SG:App below his usual elite",c:"f-mid"}],
+       badges:[{t:"GIR elite",b:"bs"},{t:"Scramble best Tour",b:"bs"},{t:"Consistency ✓",b:"bs"},{t:"Irons concern 2026",b:"bw"}],
+       note:"World No.1 and 2× Masters champion. 101 under par in major career — the best ever. Approach play slightly below his extraordinary usual level this season."},
+      {name:"Xander Schauffele",nat:"United States",rank:10,initials:"XS",color:"#8a5a1a",
+       drive:305,fw:60,gir:73,putts:28.0,sand:58,sgp:0.62,sga:1.05,sgott:0.68,prox125:21,xbird:33,scramble:64,birdie:4.2,drv_eff:86,bogey_avoid:75,
+       fit:4,form:[{l:"Players Championship T3",c:"f-top5"},{l:"Valspar T4",c:"f-top10"},{l:"Masters R1: -2 (T6)",c:"f-top10"},{l:"5 Masters top-10s in 7 starts",c:"f-top5"}],
+       badges:[{t:"Drive ✓",b:"bs"},{t:"SG:App ✓",b:"bs"},{t:"Putting ✓",b:"bs"},{t:"Augusta specialist",b:"bi"}],
+       note:"Five top-10s in seven Masters starts. Recovered from rib injury with strong 2026 form. Among the most consistent Augusta performers of his generation."},
+      {name:"Tommy Fleetwood",nat:"England",rank:4,initials:"TF",color:"#993c1d",
+       drive:292,fw:65,gir:71,putts:28.4,sand:55,sgp:0.52,sga:0.88,sgott:0.55,prox125:23,xbird:30,scramble:61,birdie:3.9,drv_eff:84,bogey_avoid:73,
+       fit:4,form:[{l:"4 top-10s in 5 starts 2026",c:"f-top10"},{l:"FedExCup 2025 champion",c:"f-win"},{l:"Masters R1: -1",c:"f-top10"},{l:"Putting must show up",c:"f-mid"}],
+       badges:[{t:"Iron play ✓",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"8 major top-10s",b:"bi"},{t:"Putting ~",b:"bw"}],
+       note:"8 major top-10s with no win — iron play is elite. Putting consistency at Augusta's greens is the remaining question mark for Fleetwood."},
+      {name:"Matt Fitzpatrick",nat:"England",rank:6,initials:"MF",color:"#3a4a8c",
+       drive:285,fw:72,gir:73,putts:28.4,sand:63,sgp:0.65,sga:1.05,sgott:0.52,prox125:22,xbird:30,scramble:65,birdie:3.8,drv_eff:82,bogey_avoid:76,
+       fit:4,form:[{l:"Valspar Championship W",c:"f-win"},{l:"Farmers Insurance R/U",c:"f-top5"},{l:"4th FW% on Tour (69%)",c:"f-top5"},{l:"Masters R1: +1",c:"f-mid"}],
+       badges:[{t:"Accuracy elite",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"Sand ✓",b:"bs"},{t:"Distance ~",b:"bw"}],
+       note:"Valspar winner in March — ballstriking back at its best. Elite accuracy and iron play suit Augusta's premium greens. Distance off tee slightly below field average."},
+      {name:"Collin Morikawa",nat:"United States",rank:7,initials:"CM",color:"#534ab7",
+       drive:289,fw:71,gir:78,putts:28.6,sand:62,sgp:0.48,sga:1.22,sgott:0.50,prox125:20,xbird:32,scramble:63,birdie:3.9,drv_eff:83,bogey_avoid:74,
+       fit:4,form:[{l:"Back injury — battling at Augusta",c:"f-injury"},{l:"R2: -3 (strong recovery)",c:"f-top10"},{l:"Best FW% since 2020",c:"f-top5"},{l:"2× major champion",c:"f-top5"}],
+       badges:[{t:"GIR #2 on Tour",b:"bs"},{t:"FW% elite",b:"bs"},{t:"SG:App world-class",b:"bs"},{t:"Back concern",b:"bw"}],
+       note:"Two-time major champion battling a back injury. Made the cut and bounced back strongly in R2. If healthy, his iron precision is tailor-made for Augusta."},
+    ],
+    outside:[
+      {name:"Bryson DeChambeau",nat:"United States",rank:24,initials:"BD",color:"#5a3080",
+       drive:327,fw:52,gir:77,putts:28.8,sand:58,sgp:0.42,sga:1.08,sgott:1.10,prox125:22,xbird:38,scramble:60,birdie:4.5,drv_eff:78,bogey_avoid:68,
+       fit:3,form:[{l:"LIV Singapore W + S.Africa W",c:"f-win"},{l:"Back-to-back LIV wins",c:"f-win"},{l:"2× US Open champion",c:"f-top5"},{l:"Masters R1: +4 (struggling)",c:"f-missed"}],
+       badges:[{t:"Distance elite",b:"bs"},{t:"GIR improving",b:"bs"},{t:"SG:OTT elite",b:"bi"},{t:"Accuracy concern",b:"bd"}],
+       note:"Won last 2 LIV events coming in. Elite distance and improving iron stats (82% GIR on LIV). Augusta's light rough suits his power game. Unfinished Augusta business drives him every year."},
+      {name:"Jon Rahm",nat:"Spain",rank:30,initials:"JR",color:"#b04a10",
+       drive:306,fw:60,gir:72,putts:28.3,sand:57,sgp:0.55,sga:1.02,sgott:0.72,prox125:22,xbird:33,scramble:63,birdie:4.1,drv_eff:85,bogey_avoid:72,
+       fit:3,form:[{l:"2023 Masters champion",c:"f-win"},{l:"Leading LIV in SG: Total",c:"f-top5"},{l:"LIV South Africa playoff W",c:"f-win"},{l:"Masters R1: +6 (rough start)",c:"f-missed"}],
+       badges:[{t:"Augusta winner ✓",b:"bs"},{t:"Ball-striking ✓",b:"bs"},{t:"SG:Total LIV leader",b:"bi"},{t:"R1 disaster",b:"bd"}],
+       note:"2023 Masters champion playing elite golf on LIV. Best SG: Total on tour. Historically 3rd in SG at Augusta. Champions know how to bounce back — always a danger."},
+      {name:"Ludvig Åberg",nat:"Sweden",rank:17,initials:"LÅ",color:"#2a5f7a",
+       drive:308,fw:60,gir:70,putts:28.8,sand:56,sgp:0.48,sga:0.90,sgott:0.75,prox125:24,xbird:30,scramble:59,birdie:4.0,drv_eff:85,bogey_avoid:70,
+       fit:3,form:[{l:"Genesis Invitational W 2025",c:"f-win"},{l:"Masters 2024: Runner-up",c:"f-top5"},{l:"Masters 2025: T7",c:"f-top10"},{l:"Players collapse — mental test",c:"f-mid"}],
+       badges:[{t:"Drive ✓",b:"bs"},{t:"Augusta pedigree",b:"bi"},{t:"2024 runner-up",b:"bi"},{t:"Composure question",b:"bw"}],
+       note:"Runner-up 2024, T7 2025 — back-to-back Augusta excellence. At 26, maturing rapidly. The only question is composure after The Players collapse. Talent is elite."},
+      {name:"Tyrrell Hatton",nat:"England",rank:19,initials:"TH",color:"#7a3a1a",
+       drive:296,fw:62,gir:69,putts:28.4,sand:55,sgp:0.68,sga:0.88,sgott:0.60,prox125:24,xbird:29,scramble:62,birdie:4.0,drv_eff:82,bogey_avoid:72,
+       fit:3,form:[{l:"Masters 2026: T3 (fired two 66s)",c:"f-top5"},{l:"Two 66s at Augusta 2026",c:"f-top5"},{l:"LIV League strong form",c:"f-top10"},{l:"Putting can be inconsistent",c:"f-mid"}],
+       badges:[{t:"Augusta top-3 ✓",b:"bs"},{t:"Ball-striking",b:"bi"},{t:"Two 66s at Masters",b:"bs"},{t:"Putting variance",b:"bw"}],
+       note:"Fired two rounds of 66 at the 2026 Masters to finish T3 — his best major result. Streaky scorer who can go very low. If putting clicks at Augusta, he's a genuine threat."},
+      {name:"Cameron Young",nat:"United States",rank:8,initials:"CY",color:"#1a5a3a",
+       drive:316,fw:58,gir:72,putts:27.8,sand:56,sgp:0.90,sga:1.05,sgott:0.85,prox125:22,xbird:33,scramble:62,birdie:4.4,drv_eff:80,bogey_avoid:72,
+       fit:4,form:[{l:"Players Championship W 2026",c:"f-win"},{l:"Masters 2026: T3 (54-hole leader!)",c:"f-top5"},{l:"AT&T Pebble Beach W 2026",c:"f-win"},{l:"Final round 75 cost Masters title",c:"f-mid"}],
+       badges:[{t:"2× 2026 winner",b:"bs"},{t:"Elite distance",b:"bs"},{t:"54-hole Masters leader",c:"bi"},{t:"Closing weakness",b:"bw"}],
+       note:"Led the 2026 Masters through 54 holes before a final-round 75. Players champion and two wins in 2026. The closing question mark is real — but his ceiling is enormous."},
+      {name:"Patrick Reed",nat:"United States",rank:23,initials:"PR",color:"#5a3020",
+       drive:288,fw:70,gir:72,putts:28.5,sand:52,sgp:0.88,sga:0.72,sgott:0.50,prox125:24,xbird:29,scramble:60,birdie:3.9,drv_eff:80,bogey_avoid:73,
+       fit:3,form:[{l:"2018 Masters champion",c:"f-win"},{l:"39 under at Augusta since 2018",c:"f-top5"},{l:"DP World Tour wins 2026",c:"f-win"},{l:"Masters 2026 — strong R1/R2",c:"f-top5"}],
+       badges:[{t:"Augusta champion ✓",b:"bs"},{t:"Putting elite",b:"bs"},{t:"Major clutch gene",b:"bi"},{t:"LIV/DP player",b:"bw"}],
+       note:"39 under par at Augusta since his 2018 win — his love affair with this course is undeniable. Elite putting and major clutch gene. Always a threat at Augusta regardless of form."},
+    ]
+  },
+
+  usopen:{
+    name:"United States Open Championship",
+    venue:"USGA-designated venue — Oakmont / Congressional / Winged Foot style",
+    insight:"The USGA engineers the US Open as the sternest examination in golf. Thick penal rough punishes every missed fairway, narrow corridors demand precision, and firm-fast greens make GIR a serious challenge. Driving accuracy is historically the single strongest predictor of winning. Winning scores are often near even par. Mental resilience and course management trump power. Elite scramblers and iron players thrive. SG: Approach is the strongest modern metric predictor here — getting approach shots close on firm greens is everything.",
+    composite:{score:91,title:"USGA Venue — The Accuracy Exam",desc:"91/100 — the most demanding composite score of any major. Extreme rough severity, narrow fairways, and firm-fast greens create the ultimate test of complete ball-striking. Distance is almost irrelevant in penal rough. Mental strength is a multiplier.",chips:["Accuracy is everything","Extreme rough penalty","Scrambling under pressure","Firm-fast greens","Mental fortitude key","Par is the new birdie"]},
+    benchmarks:[
+      {l:"Driving distance",v:"289",u:"yds",s:"Accuracy far outweighs power here"},
+      {l:"Fairways hit",v:"68",u:"%",s:"Critical — brutal penal rough"},
+      {l:"GIR %",v:"68",u:"%",s:"Firm greens very hard to hold"},
+      {l:"Putts per round",v:"29.1",u:"",s:"Treacherous grain and slopes"},
+      {l:"Sand save %",v:"52",u:"%",s:"Greenside bunkers are punishing"},
+      {l:"Scrambling %",v:"56",u:"%",s:"Up-and-down from rough vital"},
+      {l:"SG: Putting",v:"+0.4",u:"",s:"Consistent putting required"},
+      {l:"SG: Approach",v:"+0.9",u:"",s:"Strongest modern predictor here"},
+      {l:"SG: Off-the-Tee",v:"+0.4",u:"",s:"Accuracy off tee > distance"},
+      {l:"Par-4 scoring",v:"4.18",u:"avg",s:"Difficult par-4s define the week"},
+      {l:"Proximity 125–175",v:"26",u:"ft",s:"Approach to firm greens"},
+      {l:"Bogey avoidance",v:"82",u:"%",s:"Avoiding doubles is critical"},
+      {l:"Driving efficiency",v:"84",u:"%",s:"Combo accuracy + distance index"},
+      {l:"Winning score",v:"71.2",u:"avg",s:"Often near even par to win"},
+    ],
+    importance:[
+      {s:"Driving accuracy",p:95,c:"#3a8a4c"},{s:"Scrambling / up & down",p:90,c:"#3a8a4c"},
+      {s:"SG: Approach",p:88,c:"#3a8a4c"},{s:"Mental fortitude",p:88,c:"#c9a84c"},
+      {s:"Bogey avoidance",p:85,c:"#c9a84c"},{s:"GIR %",p:82,c:"#7b6fe0"},
+      {s:"Proximity 125–175",p:80,c:"#7b6fe0"},{s:"Putting",p:72,c:"#7b6fe0"},
+      {s:"Driving efficiency",p:68,c:"#555"},{s:"Driving distance",p:38,c:"#555"},
+    ],
+    chars:[
+      {l:"Rough severity",v:"Extreme (4–5 inch)",b:"bd"},{l:"Bunker difficulty",v:"Very high",b:"bd"},
+      {l:"Green speed",v:"Very fast (12–13 Stimp)",b:"bd"},{l:"Fairway width",v:"Narrow",b:"bd"},
+      {l:"Wind factor",v:"Variable",b:"bw"},{l:"Course length",v:"~7,300 yards (par 70/71)",b:"bi"},
+      {l:"Scoring vs par",v:"Often +1 to +3 to win",b:"bw"},{l:"Green firmness",v:"Very firm",b:"bd"},
+    ],
+    winners:[
+      {yr:2024,n:"Bryson DeChambeau",sc:-6,dr:324,fw:55,gir:68,pu:29.2,sa:58,sgp:0.50,sga:0.95,sgott:1.05,prox:24,xb:28,bb:22},
+      {yr:2023,n:"Wyndham Clark",sc:-10,dr:298,fw:60,gir:70,pu:28.7,sa:60,sgp:0.72,sga:0.88,sgott:0.65,prox:25,xb:30,bb:26},
+      {yr:2022,n:"Matt Fitzpatrick",sc:-6,dr:288,fw:68,gir:72,pu:28.4,sa:62,sgp:0.65,sga:1.02,sgott:0.55,prox:23,xb:29,bb:28},
+      {yr:2021,n:"Jon Rahm",sc:-6,dr:296,fw:69,gir:74,pu:28.1,sa:55,sgp:0.55,sga:1.10,sgott:0.62,prox:22,xb:31,bb:25},
+      {yr:2020,n:"Bryson DeChambeau",sc:-6,dr:325,fw:52,gir:67,pu:29.4,sa:54,sgp:0.40,sga:1.08,sgott:1.10,prox:26,xb:27,bb:20},
+      {yr:2019,n:"Gary Woodland",sc:-13,dr:302,fw:62,gir:71,pu:28.9,sa:59,sgp:0.62,sga:0.80,sgott:0.70,prox:24,xb:28,bb:24},
+      {yr:2018,n:"Brooks Koepka",sc:-1,dr:309,fw:61,gir:69,pu:29.0,sa:53,sgp:0.48,sga:0.92,sgott:0.78,prox:25,xb:27,bb:21},
+      {yr:2017,n:"Brooks Koepka",sc:-16,dr:305,fw:66,gir:73,pu:28.5,sa:60,sgp:0.58,sga:0.98,sgott:0.72,prox:23,xb:30,bb:23},
+      {yr:2016,n:"Dustin Johnson",sc:-4,dr:318,fw:57,gir:70,pu:29.3,sa:56,sgp:0.45,sga:0.88,sgott:0.95,prox:25,xb:27,bb:19},
+      {yr:2015,n:"Jordan Spieth",sc:5,dr:285,fw:70,gir:69,pu:29.6,sa:53,sgp:0.82,sga:0.75,sgott:0.50,prox:26,xb:26,bb:25},
+      {yr:2014,n:"Martin Kaymer",sc:-9,dr:291,fw:66,gir:71,pu:28.7,sa:57,sgp:0.58,sga:0.88,sgott:0.55,prox:24,xb:28,bb:22},
+      {yr:2013,n:"Justin Rose",sc:1,dr:287,fw:67,gir:68,pu:29.2,sa:55,sgp:0.45,sga:0.78,sgott:0.52,prox:26,xb:25,bb:20},
+      {yr:2012,n:"Webb Simpson",sc:1,dr:279,fw:72,gir:65,pu:28.5,sa:62,sgp:0.68,sga:0.70,sgott:0.42,prox:27,xb:24,bb:24},
+      {yr:2011,n:"Rory McIlroy",sc:-16,dr:301,fw:69,gir:74,pu:28.0,sa:55,sgp:0.75,sga:1.12,sgott:0.68,prox:22,xb:32,bb:30},
+    ],
+    contenderInsight:"The US Open demands the most complete ball-striker. Finding fairways AND holding firm greens under extreme pressure separates contenders from champions. Fitzpatrick is the prototype. Scheffler's GIR dominance and scrambling translate powerfully to USGA setups.",
+    contenders:[
+      {name:"Matt Fitzpatrick",nat:"England",rank:6,initials:"MF",color:"#1d7a40",
+       drive:285,fw:72,gir:73,putts:28.4,sand:63,sgp:0.65,sga:1.05,sgott:0.52,prox125:22,xbird:30,scramble:65,birdie:3.8,drv_eff:83,bogey_avoid:77,
+       fit:5,form:[{l:"Valspar W",c:"f-win"},{l:"Farmers Insurance R/U",c:"f-top5"},{l:"4th FW% on Tour (69%)",c:"f-top5"},{l:"2022 US Open champion",c:"f-win"}],
+       badges:[{t:"US Open DNA",b:"bs"},{t:"Accuracy elite",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"Sand ✓",b:"bs"}],
+       note:"The prototypical US Open player. Won at Brookline (2022) with supreme accuracy and iron play. Ballstriking back at world-class level entering 2026."},
+      {name:"Scottie Scheffler",nat:"United States",rank:1,initials:"SS",color:"#3a4a8c",
+       drive:301,fw:62,gir:75,putts:28.2,sand:64,sgp:0.45,sga:0.92,sgott:0.72,prox125:20,xbird:36,scramble:68,birdie:4.5,drv_eff:87,bogey_avoid:78,
+       fit:5,form:[{l:"American Express W",c:"f-win"},{l:"GIR #1 on Tour",c:"f-top5"},{l:"Scrambling best on Tour",c:"f-top5"},{l:"101 under in majors career",c:"f-top5"}],
+       badges:[{t:"GIR dominant",b:"bs"},{t:"Scramble elite",b:"bs"},{t:"Major pedigree",b:"bi"},{t:"Accuracy moderate",b:"bw"}],
+       note:"GIR and scrambling stats are the best on Tour — ideal for brutal USGA setups. Approach play slightly below his usual elite standard in early 2026."},
+      {name:"Collin Morikawa",nat:"United States",rank:7,initials:"CM",color:"#534ab7",
+       drive:289,fw:71,gir:78,putts:28.6,sand:62,sgp:0.48,sga:1.22,sgott:0.50,prox125:20,xbird:32,scramble:63,birdie:3.9,drv_eff:83,bogey_avoid:75,
+       fit:4,form:[{l:"Best FW% on Tour (2020–25)",c:"f-top5"},{l:"GIR #2 on Tour",c:"f-top5"},{l:"Back injury — recovering",c:"f-injury"},{l:"2× major champion",c:"f-top5"}],
+       badges:[{t:"FW% elite",b:"bs"},{t:"GIR #2",b:"bs"},{t:"Iron play world-class",b:"bs"},{t:"Back concern",b:"bw"}],
+       note:"If healthy, arguably the most precise iron player in the world. His accuracy and GIR stats are almost tailor-made for USGA penal setups."},
+      {name:"Tommy Fleetwood",nat:"England",rank:4,initials:"TF",color:"#993c1d",
+       drive:292,fw:65,gir:71,putts:28.4,sand:55,sgp:0.52,sga:0.88,sgott:0.55,prox125:23,xbird:30,scramble:61,birdie:3.9,drv_eff:83,bogey_avoid:74,
+       fit:4,form:[{l:"4 top-10s in 5 starts 2026",c:"f-top10"},{l:"FedExCup 2025 champion",c:"f-win"},{l:"US Open R/U 2018 (shot 63)",c:"f-top5"},{l:"Iron play excellent",c:"f-top10"}],
+       badges:[{t:"Iron play ✓",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"US Open pedigree",b:"bi"},{t:"Putting ~",b:"bw"}],
+       note:"Shot 63 at Shinnecock Hills in 2018 — the iconic near-miss. Iron play suits USGA setups beautifully. Putting consistency is the one variable."},
+      {name:"Justin Rose",nat:"England",rank:9,initials:"JR",color:"#5a3080",
+       drive:285,fw:67,gir:70,putts:28.8,sand:57,sgp:0.55,sga:0.80,sgott:0.48,prox125:25,xbird:27,scramble:60,birdie:3.6,drv_eff:80,bogey_avoid:74,
+       fit:4,form:[{l:"Farmers Insurance W 2026",c:"f-win"},{l:"Masters 2025 R/U (playoff)",c:"f-top5"},{l:"2013 US Open champion",c:"f-win"},{l:"Playing elite at 45",c:"f-top10"}],
+       badges:[{t:"US Open DNA",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"Major composure",b:"bs"},{t:"Age 45",b:"bw"}],
+       note:"2013 US Open champion. Winner on Tour in 2026. At 45, one of the most composed players in major moments. Accuracy and iron play remain world-class."},
+      {name:"Rory McIlroy",nat:"Northern Ireland",rank:2,initials:"RM",color:"#2e5fa3",
+       drive:315,fw:57,gir:72,putts:28.5,sand:59,sgp:0.68,sga:0.95,sgott:0.88,prox125:22,xbird:32,scramble:62,birdie:4.3,drv_eff:80,bogey_avoid:73,
+       fit:3,form:[{l:"Masters 2026 leader",c:"f-win"},{l:"SG tee-to-green Tour leader",c:"f-top5"},{l:"2011 US Open champion",c:"f-win"},{l:"Accuracy concern in rough",c:"f-mid"}],
+       badges:[{t:"Distance ✓",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"US Open winner",b:"bi"},{t:"Accuracy concern",b:"bd"}],
+       note:"Won the 2011 US Open by 8 shots at Congressional. Low accuracy off the tee is a real liability in penal USGA rough. Still a danger in any major."},
+    ],
+    outside:[
+      {name:"Wyndham Clark",nat:"United States",rank:22,initials:"WC",color:"#2a7a5a",
+       drive:298,fw:60,gir:70,putts:28.7,sand:60,sgp:0.72,sga:0.88,sgott:0.62,prox125:24,xbird:28,scramble:62,birdie:4.0,drv_eff:81,bogey_avoid:72,
+       fit:3,form:[{l:"2023 US Open champion",c:"f-win"},{l:"Won at LA Country Club",c:"f-top5"},{l:"Masters 2026 strong form",c:"f-top10"},{l:"Tour form inconsistent",c:"f-mid"}],
+       badges:[{t:"US Open DNA",b:"bs"},{t:"LACC winner",b:"bi"},{t:"Putting ✓",b:"bs"},{t:"Form patchy",b:"bw"}],
+       note:"Defending US Open champion — won at LACC in 2023. US Open pedigree proven. Precision game and elite putting are perfect for USGA setups. Dark horse every year at this event."},
+      {name:"Russell Henley",nat:"United States",rank:12,initials:"RH",color:"#3a6a2a",
+       drive:291,fw:67,gir:73,putts:28.0,sand:59,sgp:0.82,sga:0.92,sgott:0.55,prox125:22,xbird:30,scramble:63,birdie:4.0,drv_eff:82,bogey_avoid:76,
+       fit:3,form:[{l:"Masters 2026: T3 (breakthrough!)",c:"f-top5"},{l:"Elite putting on Tour",c:"f-top5"},{l:"Arnold Palmer W 2025",c:"f-win"},{l:"USGA accuracy profile ✓",c:"f-top5"}],
+       badges:[{t:"Putting elite",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"Masters T3 form",b:"bs"},{t:"No major yet",b:"bw"}],
+       note:"Finished T3 at the 2026 Masters — his best major. Accuracy, GIR and putting profile matches US Open winner prototypes almost perfectly. Major breakout feels imminent."},
+      {name:"Brooks Koepka",nat:"United States",rank:35,initials:"BK",color:"#5a1a1a",
+       drive:307,fw:61,gir:70,putts:28.8,sand:55,sgp:0.48,sga:0.92,sgott:0.78,prox125:24,xbird:28,scramble:60,birdie:4.0,drv_eff:82,bogey_avoid:73,
+       fit:4,form:[{l:"2× US Open champion",c:"f-win"},{l:"3× PGA Champion",c:"f-win"},{l:"Record 72-hole US Open pace",c:"f-top5"},{l:"LIV form — limited data",c:"f-mid"}],
+       badges:[{t:"2× US Open champion",b:"bs"},{t:"Major clutch gene",b:"bs"},{t:"Major pedigree elite",b:"bi"},{t:"LIV form unknown",b:"bw"}],
+       note:"Two-time US Open champion who finds another gear at this specific event. Also 3× PGA champion. His record at major championships is historically elite. Never rule out Koepka."},
+      {name:"Harris English",nat:"United States",rank:16,initials:"HE",color:"#2a4a7a",
+       drive:295,fw:64,gir:71,putts:28.3,sand:58,sgp:0.78,sga:0.88,sgott:0.62,prox125:23,xbird:30,scramble:63,birdie:4.1,drv_eff:83,bogey_avoid:74,
+       fit:3,form:[{l:"Farmers Insurance W 2026",c:"f-win"},{l:"Cognizant Classic W 2025",c:"f-win"},{l:"Consistent SG:Putting",c:"f-top5"},{l:"US Open record improving",c:"f-top10"}],
+       badges:[{t:"2× 2025-26 winner",b:"bs"},{t:"Putting ✓",b:"bs"},{t:"Accuracy profile",b:"bi"},{t:"No major yet",b:"bw"}],
+       note:"Won twice in this PGA Tour cycle showing elite form. Accuracy and putting profile suit US Open setups ideally. At 35, peaking at the right time for a first major breakthrough."},
+      {name:"Tyrrell Hatton",nat:"England",rank:19,initials:"TH",color:"#7a3a1a",
+       drive:296,fw:62,gir:69,putts:28.4,sand:55,sgp:0.68,sga:0.88,sgott:0.60,prox125:24,xbird:29,scramble:62,birdie:4.0,drv_eff:82,bogey_avoid:72,
+       fit:3,form:[{l:"Masters 2026: T3 (two 66s)",c:"f-top5"},{l:"LIV strong form all season",c:"f-top10"},{l:"Ryder Cup elite performer",c:"f-top5"},{l:"Inconsistent season scoring",c:"f-mid"}],
+       badges:[{t:"Masters T3 form",b:"bs"},{t:"Ball-striking",b:"bi"},{t:"Pressure performer",b:"bs"},{t:"Putting variance",b:"bw"}],
+       note:"Fired two 66s at the 2026 Masters to finish T3. Streaky but when his ball-striking and putting align he is top-10 quality at any major. US Open suits his grinding style."},
+      {name:"Joaquin Niemann",nat:"Chile",rank:21,initials:"JN",color:"#5a1a5a",
+       drive:312,fw:59,gir:70,putts:28.5,sand:55,sgp:0.55,sga:0.92,sgott:0.88,prox125:24,xbird:30,scramble:61,birdie:4.2,drv_eff:79,bogey_avoid:70,
+       fit:3,form:[{l:"LIV season leader 2025",c:"f-win"},{l:"Multiple LIV wins",c:"f-win"},{l:"Strong SG: Approach metrics",c:"f-top5"},{l:"Limited US Open history",c:"f-mid"}],
+       badges:[{t:"LIV season leader",b:"bs"},{t:"Distance ✓",b:"bs"},{t:"Approach ✓",b:"bi"},{t:"Major experience limited",b:"bw"}],
+       note:"LIV season leader with elite distance and improving approach stats. At 25, his game is maturing rapidly. The US Open rewards approach excellence — Niemann has the tools to compete."},
+    ]
+  },
+
+  theopen:{
+    name:"The Open Championship",
+    venue:"Royal Troon / St Andrews / Hoylake / Royal Liverpool — links courses, UK",
+    insight:"Links golf is a completely different game. Wind management, bump-and-run shots, and course management dominate strategy. Pot bunkers must be avoided at all costs — many are near-unplayable. Players who keep the ball below the wind and think their way around the course thrive. GIR is less predictive than on parkland — scrambling, creativity, and links experience matter more than any stat can capture. SG: Around-the-Green becomes more important here than at any other major.",
+    composite:{score:78,title:"Links Examination — The Wind Test",desc:"78/100 reflecting the unique unpredictability of links golf. Standard stats are less predictive here than at any other major. Wind management, pot bunker avoidance, and accumulated links experience are the true differentiators that numbers struggle to capture.",chips:["Wind management critical","Pot bunkers devastating","Links experience valued","Creative shot-making","Bump-and-run essential","Stats less predictive here"]},
+    benchmarks:[
+      {l:"Driving distance",v:"291",u:"yds",s:"Wind management more important"},
+      {l:"Fairways hit",v:"63",u:"%",s:"Avoid pot bunkers above all"},
+      {l:"GIR %",v:"65",u:"%",s:"Links greens unpredictable"},
+      {l:"Putts per round",v:"28.8",u:"",s:"Links putting style differs"},
+      {l:"Sand save %",v:"48",u:"%",s:"Pot bunkers near unplayable"},
+      {l:"Scrambling %",v:"60",u:"%",s:"Creativity from off greens vital"},
+      {l:"SG: Around-the-Green",v:"+0.6",u:"",s:"Biggest differentiator on links"},
+      {l:"SG: Putting",v:"+0.5",u:"",s:"Links grain style differs"},
+      {l:"Links top-10 history",v:"3+",u:"",s:"Prior results matter hugely"},
+      {l:"Proximity FW woods",v:"32",u:"ft",s:"Long approach accuracy vital"},
+      {l:"Low ball flight rating",v:"Elite",u:"",s:"Non-standard — wind essential"},
+      {l:"Bogey avoidance",v:"78",u:"%",s:"Avoiding pot bunker disasters"},
+      {l:"Wind score variance",v:"High",u:"",s:"Score variation with wind"},
+      {l:"Winning score",v:"69.2",u:"avg",s:"Varies hugely with conditions"},
+    ],
+    importance:[
+      {s:"Course management",p:92,c:"#3a8a4c"},{s:"Wind play / creativity",p:88,c:"#3a8a4c"},
+      {s:"Links experience",p:84,c:"#c9a84c"},{s:"Driving accuracy",p:82,c:"#c9a84c"},
+      {s:"SG: Around-the-Green",p:82,c:"#c9a84c"},{s:"Up & down / scrambling",p:78,c:"#7b6fe0"},
+      {s:"Putting (grain adjust)",p:68,c:"#7b6fe0"},{s:"Bogey avoidance",p:76,c:"#7b6fe0"},
+      {s:"GIR %",p:60,c:"#555"},{s:"Driving distance",p:50,c:"#555"},
+    ],
+    chars:[
+      {l:"Rough severity",v:"Variable — fescue",b:"bw"},{l:"Bunker difficulty",v:"Extreme — pot bunkers",b:"bd"},
+      {l:"Green speed",v:"Fast",b:"bw"},{l:"Wind factor",v:"Dominant — changes everything",b:"bd"},
+      {l:"Running game",v:"Essential",b:"bd"},{l:"Course length",v:"~7,200 yards (par 70/71)",b:"bi"},
+      {l:"Links experience",v:"Hidden advantage",b:"bw"},{l:"Low ball flight",v:"Premium value",b:"bd"},
+    ],
+    winners:[
+      {yr:2024,n:"Xander Schauffele",sc:-9,dr:305,fw:65,gir:68,pu:28.5,sa:50,sgp:0.55,sga:0.88,sgott:0.70,prox:28,xb:26,bb:24},
+      {yr:2023,n:"Brian Harman",sc:-13,dr:284,fw:68,gir:66,pu:28.9,sa:58,sgp:0.62,sga:0.78,sgott:0.52,prox:28,xb:24,bb:26},
+      {yr:2022,n:"Cameron Smith",sc:-20,dr:299,fw:62,gir:64,pu:27.8,sa:53,sgp:1.05,sga:0.72,sgott:0.62,prox:30,xb:24,bb:28},
+      {yr:2021,n:"Collin Morikawa",sc:-15,dr:295,fw:70,gir:74,pu:28.2,sa:60,sgp:0.52,sga:1.08,sgott:0.60,prox:26,xb:28,bb:25},
+      {yr:2019,n:"Shane Lowry",sc:-15,dr:287,fw:62,gir:65,pu:28.6,sa:47,sgp:0.70,sga:0.75,sgott:0.55,prox:29,xb:24,bb:22},
+      {yr:2018,n:"Francesco Molinari",sc:-8,dr:285,fw:72,gir:68,pu:28.4,sa:62,sgp:0.58,sga:0.88,sgott:0.48,prox:27,xb:25,bb:20},
+      {yr:2017,n:"Jordan Spieth",sc:-12,dr:288,fw:64,gir:67,pu:28.7,sa:52,sgp:0.75,sga:0.82,sgott:0.55,prox:28,xb:25,bb:28},
+      {yr:2016,n:"Henrik Stenson",sc:-20,dr:296,fw:66,gir:70,pu:27.9,sa:48,sgp:0.88,sga:1.02,sgott:0.62,prox:26,xb:28,bb:26},
+      {yr:2015,n:"Zach Johnson",sc:-15,dr:281,fw:67,gir:63,pu:29.1,sa:55,sgp:0.92,sga:0.68,sgott:0.44,prox:30,xb:22,bb:22},
+      {yr:2014,n:"Rory McIlroy",sc:-17,dr:304,fw:63,gir:70,pu:28.3,sa:58,sgp:0.65,sga:1.12,sgott:0.82,prox:26,xb:28,bb:30},
+      {yr:2013,n:"Phil Mickelson",sc:-3,dr:295,fw:60,gir:65,pu:28.8,sa:55,sgp:0.55,sga:0.82,sgott:0.62,prox:29,xb:24,bb:22},
+      {yr:2012,n:"Ernie Els",sc:-7,dr:286,fw:62,gir:63,pu:29.0,sa:49,sgp:0.48,sga:0.72,sgott:0.50,prox:30,xb:22,bb:20},
+      {yr:2011,n:"Darren Clarke",sc:-15,dr:285,fw:64,gir:62,pu:29.2,sa:51,sgp:0.60,sga:0.70,sgott:0.48,prox:31,xb:21,bb:21},
+    ],
+    contenderInsight:"McIlroy is the premier links player of his generation. Fleetwood and MacIntyre carry native British links DNA. Morikawa's stunning first Open win shows world-class irons translate even to links. Creativity, wind management, and links experience are the true intangibles here.",
+    contenders:[
+      {name:"Rory McIlroy",nat:"Northern Ireland",rank:2,initials:"RM",color:"#1d7a40",
+       drive:315,fw:57,gir:72,putts:28.5,sand:59,sgp:0.68,sga:0.95,sgott:0.88,prox125:22,xbird:32,scramble:62,birdie:4.3,drv_eff:80,bogey_avoid:73,
+       fit:5,form:[{l:"2014 Open champion",c:"f-win"},{l:"Masters 2026 leader",c:"f-win"},{l:"4× major champion",c:"f-top5"},{l:"Elite links record career",c:"f-top5"}],
+       badges:[{t:"Links DNA",b:"bs"},{t:"Drive ✓",b:"bs"},{t:"Grand Slam ✓",b:"bs"},{t:"Accuracy ~",b:"bw"}],
+       note:"Won The Open at Hoylake in 2014. The No.1 links player of his generation — elite trajectory, wind control, and imagination from anywhere on the course."},
+      {name:"Tommy Fleetwood",nat:"England",rank:4,initials:"TF",color:"#2e5fa3",
+       drive:292,fw:65,gir:71,putts:28.4,sand:55,sgp:0.52,sga:0.88,sgott:0.55,prox125:23,xbird:30,scramble:61,birdie:3.9,drv_eff:83,bogey_avoid:74,
+       fit:5,form:[{l:"4 top-10s in 5 starts 2026",c:"f-top10"},{l:"FedExCup 2025 champion",c:"f-win"},{l:"Born near Royal Birkdale",c:"f-top5"},{l:"Links experience elite",c:"f-top5"}],
+       badges:[{t:"Links experience ✓",b:"bs"},{t:"Iron play ✓",b:"bs"},{t:"Aim-Point putting",b:"bi"},{t:"Born in Southport",b:"bi"}],
+       note:"Born in Southport, near Royal Birkdale. Elite links experience, supreme iron play, and Aim-Point putting method. A perennial Open Championship threat."},
+      {name:"Robert MacIntyre",nat:"Scotland",rank:8,initials:"RMI",color:"#534ab7",
+       drive:298,fw:63,gir:68,putts:28.6,sand:52,sgp:0.55,sga:0.85,sgott:0.65,prox125:25,xbird:27,scramble:58,birdie:3.8,drv_eff:83,bogey_avoid:72,
+       fit:5,form:[{l:"Canadian Open 2024 W",c:"f-win"},{l:"Players Championship T4",c:"f-top5"},{l:"Scottish — grew up on links",c:"f-top5"},{l:"Multiple Open top-15s",c:"f-top10"}],
+       badges:[{t:"Scottish native",b:"bs"},{t:"Links DNA",b:"bs"},{t:"Creative shot-maker",b:"bi"},{t:"Top 10 world",b:"bi"}],
+       note:"Born in Oban, Scotland. Bobby Mac grew up playing links golf and brings native creative shot-making that international players cannot replicate. Rising fast."},
+      {name:"Collin Morikawa",nat:"United States",rank:7,initials:"CM",color:"#993c1d",
+       drive:289,fw:71,gir:74,putts:28.5,sand:62,sgp:0.48,sga:1.22,sgott:0.50,prox125:21,xbird:30,scramble:63,birdie:3.9,drv_eff:83,bogey_avoid:74,
+       fit:4,form:[{l:"2021 Open champion",c:"f-win"},{l:"Won on his FIRST Open attempt",c:"f-win"},{l:"Back injury — recovering",c:"f-injury"},{l:"Elite iron play",c:"f-top5"}],
+       badges:[{t:"Open champion ✓",b:"bs"},{t:"Iron play world-class",b:"bs"},{t:"GIR elite",b:"bs"},{t:"Back concern",b:"bw"}],
+       note:"Won The Open at Royal St George's in 2021 on his very first attempt. Remarkable iron mastery. If healthy, his precision translates beautifully to links."},
+      {name:"Xander Schauffele",nat:"United States",rank:10,initials:"XS",color:"#8a5a1a",
+       drive:305,fw:60,gir:73,putts:28.0,sand:58,sgp:0.62,sga:1.05,sgott:0.68,prox125:21,xbird:33,scramble:64,birdie:4.2,drv_eff:84,bogey_avoid:74,
+       fit:4,form:[{l:"2024 Open champion",c:"f-win"},{l:"Players T3 2026",c:"f-top5"},{l:"Rib injury recovered",c:"f-mid"},{l:"Best SG:App last 12 months",c:"f-top5"}],
+       badges:[{t:"Open champion ✓",b:"bs"},{t:"Putting ✓",b:"bs"},{t:"SG:App elite",b:"bs"},{t:"Links improving",b:"bw"}],
+       note:"Won The Open at Royal Troon in 2024. Improving links record combined with elite putting and powerful driving make him a serious threat at any links venue."},
+      {name:"Justin Rose",nat:"England",rank:9,initials:"JR",color:"#3a4a8c",
+       drive:285,fw:67,gir:70,putts:28.8,sand:57,sgp:0.55,sga:0.80,sgott:0.48,prox125:25,xbird:27,scramble:60,birdie:3.6,drv_eff:80,bogey_avoid:73,
+       fit:4,form:[{l:"Farmers Insurance W 2026",c:"f-win"},{l:"Masters 2025 R/U (playoff)",c:"f-top5"},{l:"Hampshire links roots",c:"f-top5"},{l:"Exceptional at 45",c:"f-top10"}],
+       badges:[{t:"Links experience ✓",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"Major composure",b:"bs"},{t:"Age 45",b:"bw"}],
+       note:"Grew up playing links golf in Hampshire. Rose has the accuracy, composure, and experience to contend at The Open in any wind conditions."},
+    ],
+    outside:[
+      {name:"Shane Lowry",nat:"Ireland",rank:28,initials:"SL",color:"#2a6a1a",
+       drive:287,fw:62,gir:65,putts:28.6,sand:47,sgp:0.70,sga:0.75,sgott:0.55,prox125:28,xbird:24,scramble:60,birdie:3.7,drv_eff:80,bogey_avoid:72,
+       fit:4,form:[{l:"2019 Open champion",c:"f-win"},{l:"Won at Royal Portrush by 6",c:"f-top5"},{l:"Masters 2026: hole-in-one R3",c:"f-top10"},{l:"Irish — elite wind mastery",c:"f-top5"}],
+       badges:[{t:"Open champion ✓",b:"bs"},{t:"Links DNA",b:"bs"},{t:"Wind mastery",b:"bi"},{t:"Irish native",b:"bi"}],
+       note:"Won The Open at Royal Portrush in 2019 by 6 shots — one of the great major performances. Irish wind management gives him a structural edge. Hole-in-one at the 2026 Masters showed his clutch gene."},
+      {name:"Min Woo Lee",nat:"Australia",rank:25,initials:"ML",color:"#3a5a1a",
+       drive:308,fw:58,gir:68,putts:28.5,sand:54,sgp:0.55,sga:0.88,sgott:0.80,prox125:25,xbird:27,scramble:61,birdie:4.1,drv_eff:79,bogey_avoid:70,
+       fit:3,form:[{l:"Scottish Open winner (links!)",c:"f-win"},{l:"Houston Open W 2025",c:"f-win"},{l:"Multiple links top-10s",c:"f-top10"},{l:"Creative ball-striker",c:"f-top5"}],
+       badges:[{t:"Scottish Open W",b:"bs"},{t:"Houston Open W",b:"bs"},{t:"Links experience",b:"bi"},{t:"Accuracy concern",b:"bw"}],
+       note:"Scottish Open winner with multiple links top-10s. Won Houston Open in 2025 proving he can compete on Tour. Creative shot-making and elite distance — a genuine links threat."},
+      {name:"Sam Burns",nat:"United States",rank:5,initials:"SB",color:"#4a3a7a",
+       drive:299,fw:63,gir:70,putts:27.8,sand:58,sgp:0.88,sga:0.90,sgott:0.65,prox125:23,xbird:29,scramble:62,birdie:4.0,drv_eff:83,bogey_avoid:74,
+       fit:3,form:[{l:"Masters 2026: T7 (-9)",c:"f-top10"},{l:"Masters R1 co-leader (-5)",c:"f-top5"},{l:"3 PGA Tour wins 2025",c:"f-win"},{l:"Limited links experience",c:"f-mid"}],
+       badges:[{t:"Putting elite",b:"bs"},{t:"2026 consistency ✓",b:"bs"},{t:"T7 Masters form",b:"bi"},{t:"Links experience limited",b:"bw"}],
+       note:"Finished T7 at the 2026 Masters and has been consistently top-10 all season. Led Tour in SG:Putting — a weapon that translates anywhere. Links experience is the key unknown."},
+      {name:"Robert MacIntyre",nat:"Scotland",rank:15,initials:"RM",color:"#003f87",
+       drive:299,fw:62,gir:68,putts:28.3,sand:55,sgp:0.70,sga:0.85,sgott:0.68,prox125:24,xbird:28,scramble:62,birdie:4.0,drv_eff:83,bogey_avoid:72,
+       fit:4,form:[{l:"Canadian Open W 2024",c:"f-win"},{l:"Multiple links top-10s",c:"f-top10"},{l:"Scottish — born links player",c:"f-top5"},{l:"Rapidly rising OWGR",c:"f-top10"}],
+       badges:[{t:"Scottish native",b:"bs"},{t:"Links DNA innate",b:"bs"},{t:"Canadian Open W",b:"bi"},{t:"Major win still to come",b:"bw"}],
+       note:"Scottish native who grew up on links golf. Won the Canadian Open in 2024 and has multiple links top-10s. Auchterarder born — this is his natural environment. A genuine sentimental and statistical pick."},
+      {name:"Tyrrell Hatton",nat:"England",rank:19,initials:"TH",color:"#7a3a1a",
+       drive:296,fw:62,gir:69,putts:28.4,sand:55,sgp:0.68,sga:0.88,sgott:0.60,prox125:24,xbird:29,scramble:62,birdie:4.0,drv_eff:82,bogey_avoid:72,
+       fit:3,form:[{l:"Masters 2026: T3 (two 66s)",c:"f-top5"},{l:"LIV strong form all season",c:"f-top10"},{l:"English — links experience",c:"f-top5"},{l:"Ball-striking elite",c:"f-top5"}],
+       badges:[{t:"Masters T3 2026",b:"bs"},{t:"Ball-striking ✓",b:"bi"},{t:"Links experience",b:"bs"},{t:"Putting variance",b:"bw"}],
+       note:"Fired two 66s at the 2026 Masters to finish T3. English players tend to have strong links records. His grinding ball-striking style suits links golf. When the putter works, he's dangerous anywhere."},
+      {name:"Justin Rose",nat:"England",rank:9,initials:"JR",color:"#5a3080",
+       drive:293,fw:65,gir:71,putts:28.4,sand:57,sgp:0.72,sga:0.92,sgott:0.58,prox125:23,xbird:29,scramble:63,birdie:4.0,drv_eff:83,bogey_avoid:74,
+       fit:4,form:[{l:"Masters 2026: T3 (led Sunday!)",c:"f-top5"},{l:"Farmers Insurance W 2026",c:"f-win"},{l:"3× Open top-5 historically",c:"f-top5"},{l:"45 — age a growing factor",c:"f-mid"}],
+       badges:[{t:"Storybook form",b:"bs"},{t:"Links pedigree ✓",b:"bs"},{t:"Led Masters Sunday",c:"bi"},{t:"Age 45 concern",b:"bw"}],
+       note:"Led the 2026 Masters on Sunday before heartbreak. Won the Farmers Insurance earlier this year. Historically outstanding links record — three top-5s at The Open. At 45, time is running out but the game is still elite."},
+    ]
+  },
+
+  pgachamp:{
+    name:"PGA Championship",
+    venue:"Aronimink Golf Club, Newtown Square, Pennsylvania (2026)",
+    insight:"The PGA Championship on parkland courses tests every aspect of the game. Distance has become increasingly important as venues have trended longer. Aronimink (2026) is a Seth Raynor design measuring over 7,400 yards — a long, tree-lined parkland that rewards both driving distance and precision. GIR and putting are critical, and rough can be penal. Consistency across all four rounds — not just one explosive day — is the key differentiator that separates true major champions here. Koepka's three PGA wins illustrate the major-specific mental edge that separates the great from the very good.",
+    composite:{score:87,title:"Parkland Power Test — Complete Game Required",desc:"87/100 reflecting the balance of power and precision on long parkland layouts. GIR and 72-hole consistency are the top predictors. Distance is a genuine advantage at Aronimink. Major championship pedigree is a hidden multiplier that stats cannot fully capture.",chips:["Distance advantage real","GIR most critical","72-hole consistency","Putting quality essential","Rough can be penal","Major pedigree matters"]},
+    benchmarks:[
+      {l:"Driving distance",v:"300",u:"yds",s:"Long layouts favour bigger hitters"},
+      {l:"Fairways hit",v:"62",u:"%",s:"Important but not paramount"},
+      {l:"GIR %",v:"70",u:"%",s:"Premium ball-striking required"},
+      {l:"Putts per round",v:"28.6",u:"",s:"Quality putting is essential"},
+      {l:"Sand save %",v:"54",u:"%",s:"Bunkers (Seth Raynor style) in play"},
+      {l:"Scrambling %",v:"60",u:"%",s:"Recovery from rough vital"},
+      {l:"SG: Putting",v:"+0.6",u:"",s:"Better-than-average putting needed"},
+      {l:"SG: Approach",v:"+1.0",u:"",s:"Iron play is the main differentiator"},
+      {l:"Birdies per round",v:"4.2",u:"",s:"Must make birdies to win at Aronimink"},
+      {l:"72-hole consistency",v:"Top 10",u:"all 4",s:"No blow-up rounds tolerated"},
+      {l:"Proximity 125–175",v:"21",u:"ft",s:"Iron accuracy into fast greens"},
+      {l:"Driving efficiency",v:"85",u:"%",s:"Combined distance + accuracy index"},
+      {l:"xBirdie rate",v:"31",u:"%",s:"Expected birdie from approach"},
+      {l:"Winning score",v:"70.1",u:"avg",s:"Per round during winning week"},
+    ],
+    importance:[
+      {s:"72-hole consistency",p:90,c:"#3a8a4c"},{s:"GIR %",p:85,c:"#3a8a4c"},
+      {s:"SG: Approach",p:84,c:"#3a8a4c"},{s:"Driving distance",p:82,c:"#c9a84c"},
+      {s:"Major pedigree",p:80,c:"#c9a84c"},{s:"Putting quality",p:78,c:"#7b6fe0"},
+      {s:"Proximity 125–175",p:78,c:"#7b6fe0"},{s:"Driving accuracy",p:65,c:"#7b6fe0"},
+      {s:"xBirdie rate",p:72,c:"#c9a84c"},{s:"Sand save / scrambling",p:62,c:"#555"},
+    ],
+    chars:[
+      {l:"Rough severity",v:"Moderate-high",b:"bw"},{l:"Bunker difficulty",v:"High — Seth Raynor design",b:"bd"},
+      {l:"Green speed",v:"Fast (11–12 Stimp)",b:"bw"},{l:"Course length",v:"~7,480 yards (par 70)",b:"bi"},
+      {l:"Wind factor",v:"Low to moderate",b:"bs"},{l:"Power advantage",v:"Significant",b:"bd"},
+      {l:"Strategic bunkering",v:"Raynor trademark",b:"bw"},{l:"Green firmness",v:"Firm",b:"bw"},
+    ],
+    winners:[
+      {yr:2024,n:"Xander Schauffele",sc:-21,dr:309,fw:62,gir:74,pu:28.1,sa:58,sgp:0.78,sga:1.20,sgott:0.82,prox:21,xb:34,bb:30},
+      {yr:2023,n:"Brooks Koepka",sc:-9,dr:307,fw:60,gir:70,pu:28.4,sa:55,sgp:0.48,sga:0.95,sgott:0.78,prox:23,xb:28,bb:22},
+      {yr:2022,n:"Justin Thomas",sc:-5,dr:299,fw:64,gir:71,pu:28.2,sa:57,sgp:0.62,sga:1.05,sgott:0.68,prox:22,xb:30,bb:26},
+      {yr:2021,n:"Phil Mickelson",sc:-6,dr:285,fw:66,gir:68,pu:28.9,sa:60,sgp:0.55,sga:0.78,sgott:0.55,prox:25,xb:26,bb:24},
+      {yr:2020,n:"Collin Morikawa",sc:-13,dr:292,fw:72,gir:78,pu:27.8,sa:62,sgp:0.48,sga:1.35,sgott:0.55,prox:20,xb:34,bb:28},
+      {yr:2019,n:"Brooks Koepka",sc:-8,dr:310,fw:59,gir:72,pu:28.6,sa:54,sgp:0.52,sga:1.02,sgott:0.80,prox:22,xb:30,bb:23},
+      {yr:2018,n:"Brooks Koepka",sc:-16,dr:315,fw:57,gir:70,pu:28.8,sa:52,sgp:0.45,sga:0.95,sgott:0.82,prox:23,xb:28,bb:20},
+      {yr:2017,n:"Justin Thomas",sc:-8,dr:305,fw:61,gir:73,pu:28.0,sa:59,sgp:0.70,sga:1.10,sgott:0.78,prox:21,xb:32,bb:28},
+      {yr:2016,n:"Jimmy Walker",sc:-14,dr:290,fw:65,gir:71,pu:28.5,sa:56,sgp:0.62,sga:0.88,sgott:0.60,prox:23,xb:28,bb:24},
+      {yr:2015,n:"Jason Day",sc:-20,dr:299,fw:63,gir:76,pu:27.6,sa:61,sgp:0.88,sga:1.05,sgott:0.70,prox:20,xb:36,bb:32},
+      {yr:2014,n:"Rory McIlroy",sc:-16,dr:303,fw:67,gir:77,pu:27.5,sa:63,sgp:0.72,sga:1.28,sgott:0.75,prox:19,xb:36,bb:34},
+      {yr:2013,n:"Jason Dufner",sc:-10,dr:293,fw:66,gir:73,pu:28.3,sa:57,sgp:0.58,sga:0.98,sgott:0.62,prox:22,xb:30,bb:22},
+      {yr:2012,n:"Rory McIlroy",sc:-13,dr:299,fw:68,gir:75,pu:27.9,sa:60,sgp:0.65,sga:1.15,sgott:0.70,prox:20,xb:34,bb:30},
+      {yr:2011,n:"Keegan Bradley",sc:-10,dr:294,fw:65,gir:71,pu:28.7,sa:55,sgp:0.52,sga:0.88,sgott:0.62,prox:23,xb:28,bb:22},
+    ],
+    contenderInsight:"Aronimink 2026 suits longer hitters with elite GIR and 72-hole staying power. Scheffler is the clear favourite. Schauffele is defending champion. Morikawa's iron-play profile is a perfect fit if health allows.",
+    contenders:[
+      {name:"Scottie Scheffler",nat:"United States",rank:1,initials:"SS",color:"#1d7a40",
+       drive:301,fw:62,gir:75,putts:28.2,sand:64,sgp:0.45,sga:0.92,sgott:0.72,prox125:20,xbird:36,scramble:68,birdie:4.5,drv_eff:87,bogey_avoid:78,
+       fit:5,form:[{l:"American Express W 2026",c:"f-win"},{l:"2025 PGA Champion",c:"f-win"},{l:"GIR #1 on Tour",c:"f-top5"},{l:"Consistency unmatched",c:"f-top5"}],
+       badges:[{t:"GIR dominant",b:"bs"},{t:"Scramble elite",b:"bs"},{t:"4× major champion",b:"bs"},{t:"PGA Champ DNA",b:"bi"}],
+       note:"Won the 2025 PGA Championship at Quail Hollow by 5 shots. 101 under par in his major career — the best in history. Elite GIR and consistency."},
+      {name:"Xander Schauffele",nat:"United States",rank:10,initials:"XS",color:"#3a4a8c",
+       drive:305,fw:60,gir:73,putts:28.0,sand:58,sgp:0.62,sga:1.05,sgott:0.68,prox125:21,xbird:33,scramble:64,birdie:4.2,drv_eff:84,bogey_avoid:74,
+       fit:5,form:[{l:"2024 PGA Champion (-21!)",c:"f-win"},{l:"Players Championship T3",c:"f-top5"},{l:"Valspar T4",c:"f-top10"},{l:"Rib injury recovered",c:"f-mid"}],
+       badges:[{t:"2024 PGA Champ",b:"bs"},{t:"Drive ✓",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"Defending champion",b:"bi"}],
+       note:"Defending PGA Championship champion — won shooting -21 at Valhalla. Recovered from rib injury with solid 2026 form. Proven parkland major performer."},
+      {name:"Rory McIlroy",nat:"Northern Ireland",rank:2,initials:"RM",color:"#2e5fa3",
+       drive:315,fw:57,gir:72,putts:28.5,sand:59,sgp:0.68,sga:0.95,sgott:0.88,prox125:22,xbird:32,scramble:62,birdie:4.3,drv_eff:80,bogey_avoid:73,
+       fit:4,form:[{l:"Masters 2026 leader",c:"f-win"},{l:"2014 & 2012 PGA champion",c:"f-win"},{l:"SG:tee-to-green Tour leader",c:"f-top5"},{l:"Back spasms 2026",c:"f-injury"}],
+       badges:[{t:"2× PGA Champ",b:"bs"},{t:"Drive ✓",b:"bs"},{t:"Iron play ✓",b:"bs"},{t:"Accuracy concern",b:"bw"}],
+       note:"Won the PGA Championship in 2012 and 2014. Career Grand Slam winner. Ball-striking and mental profile to threaten at every major."},
+      {name:"Cameron Young",nat:"United States",rank:3,initials:"CY",color:"#993c1d",
+       drive:312,fw:55,gir:68,putts:28.9,sand:53,sgp:0.42,sga:0.88,sgott:0.90,prox125:24,xbird:31,scramble:58,birdie:4.4,drv_eff:78,bogey_avoid:70,
+       fit:4,form:[{l:"Players Championship W 2026",c:"f-win"},{l:"World #3",c:"f-top5"},{l:"Biggest win of career",c:"f-win"},{l:"Accuracy can be an issue",c:"f-mid"}],
+       badges:[{t:"Distance elite",b:"bs"},{t:"Birdies ✓",b:"bs"},{t:"Players champion",b:"bi"},{t:"Accuracy concern",b:"bd"}],
+       note:"Won The Players Championship in 2026. Elite distance and birdie-making. First major awaited — Aronimink's length suits him perfectly."},
+      {name:"Collin Morikawa",nat:"United States",rank:7,initials:"CM",color:"#534ab7",
+       drive:289,fw:71,gir:78,putts:28.6,sand:62,sgp:0.48,sga:1.22,sgott:0.50,prox125:20,xbird:32,scramble:63,birdie:3.9,drv_eff:83,bogey_avoid:75,
+       fit:4,form:[{l:"2020 PGA Champion",c:"f-win"},{l:"Won TPC Harding Park",c:"f-win"},{l:"Back injury — recovering",c:"f-injury"},{l:"GIR #2 on Tour",c:"f-top5"}],
+       badges:[{t:"PGA Champ DNA",b:"bs"},{t:"GIR elite",b:"bs"},{t:"FW% #1",b:"bs"},{t:"Back concern",b:"bw"}],
+       note:"Won the 2020 PGA Championship. Iron-play profile historically dominates at PGA Championship venues. Health is the key variable entering 2026."},
+      {name:"Tommy Fleetwood",nat:"England",rank:4,initials:"TF",color:"#8a5a1a",
+       drive:292,fw:65,gir:71,putts:28.4,sand:55,sgp:0.52,sga:0.88,sgott:0.55,prox125:23,xbird:30,scramble:61,birdie:3.9,drv_eff:83,bogey_avoid:74,
+       fit:4,form:[{l:"4 top-10s in 5 starts 2026",c:"f-top10"},{l:"FedExCup 2025 champion",c:"f-win"},{l:"8 major top-10s no win",c:"f-mid"},{l:"Iron play in top form",c:"f-top5"}],
+       badges:[{t:"Consistency ✓",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"Accuracy ✓",b:"bs"},{t:"Major breakthrough due",b:"bw"}],
+       note:"Four top-10s in five 2026 starts shows peak form. Parkland setups suit his ball-striking. His first major is statistically overdue — Aronimink could be the venue."},
+    ],
+    outside:[
+      {name:"Patrick Reed",nat:"United States",rank:23,initials:"PR",color:"#5a3020",
+       drive:288,fw:70,gir:72,putts:28.5,sand:52,sgp:0.88,sga:0.72,sgott:0.50,prox125:24,xbird:29,scramble:60,birdie:3.9,drv_eff:80,bogey_avoid:73,
+       fit:3,form:[{l:"2018 Masters champion",c:"f-win"},{l:"39 under at Augusta since 2018",c:"f-top5"},{l:"DP World Tour wins 2026",c:"f-win"},{l:"Strong putting metrics",c:"f-top5"}],
+       badges:[{t:"Major winner ✓",b:"bs"},{t:"Putting elite",b:"bs"},{t:"Major clutch gene",b:"bi"},{t:"LIV / DP World player",b:"bw"}],
+       note:"Masters champion with a proven major clutch gene and elite putting. Won twice on DP World Tour in 2026. Parkland PGA suits his accuracy-first profile. Aronimink's Donald Ross design rewards course management."},
+      {name:"Sepp Straka",nat:"Austria",rank:13,initials:"SK",color:"#2a5a3a",
+       drive:295,fw:63,gir:70,putts:28.5,sand:56,sgp:0.60,sga:0.90,sgott:0.65,prox125:23,xbird:28,scramble:61,birdie:4.0,drv_eff:82,bogey_avoid:73,
+       fit:3,form:[{l:"Truist Championship form 2026",c:"f-top10"},{l:"Multiple PGA Tour wins",c:"f-top10"},{l:"Elite long-game metrics",c:"f-top5"},{l:"Aronimink length suits him",c:"f-top5"}],
+       badges:[{t:"Distance ✓",b:"bs"},{t:"GIR ✓",b:"bs"},{t:"Consistent form",b:"bi"},{t:"No major yet",b:"bw"}],
+       note:"Powerful ball-striker with improving putting — Aronimink's length plays to his distance advantage. Consistently elite on Tour. At +2500 or longer, a very well-priced outside selection."},
+      {name:"Chris Gotterup",nat:"United States",rank:11,initials:"CG",color:"#3a4a1a",
+       drive:316,fw:55,gir:68,putts:28.9,sand:53,sgp:0.48,sga:0.88,sgott:0.95,prox125:25,xbird:29,scramble:58,birdie:4.2,drv_eff:77,bogey_avoid:70,
+       fit:3,form:[{l:"Houston Open W 2026",c:"f-win"},{l:"World #11 — rapid rise",c:"f-top5"},{l:"316+ yd distance weapon",c:"f-top5"},{l:"Accuracy concern at majors",c:"f-mid"}],
+       badges:[{t:"Distance elite",b:"bs"},{t:"Houston Open W",b:"bs"},{t:"SG:OTT ✓",b:"bi"},{t:"Accuracy concern",b:"bw"}],
+       note:"316+ yard driving is a genuine weapon at Aronimink. Won the Houston Open in 2026. Rapid rise to World #11. If he can tighten his accuracy, the power game makes him a serious dark horse."},
+      {name:"Gary Woodland",nat:"United States",rank:38,initials:"GW",color:"#3a3a1a",
+       drive:318,fw:58,gir:69,putts:28.2,sand:55,sgp:0.75,sga:0.88,sgott:0.92,prox125:24,xbird:28,scramble:60,birdie:4.1,drv_eff:79,bogey_avoid:71,
+       fit:4,form:[{l:"Memorial Park W 2026 (parkland!)",c:"f-win"},{l:"T12 at 2018 BMW at Aronimink!",c:"f-top5"},{l:"2019 US Open champion",c:"f-win"},{l:"Led SG:Putting at Memorial Park",c:"f-top5"}],
+       badges:[{t:"Aronimink T12 2018 ✓",b:"bs"},{t:"US Open champion",b:"bs"},{t:"Course form verified",b:"bi"},{t:"Inconsistent 2026 form",b:"bw"}],
+       note:"Won at Memorial Park in 2026 on a similar parkland layout to Aronimink. CRITICAL: finished T12 at the 2018 BMW Championship at Aronimink itself — four rounds of 67 or better. Course knowledge is a genuine edge."},
+      {name:"Russell Henley",nat:"United States",rank:12,initials:"RH",color:"#3a6a2a",
+       drive:291,fw:67,gir:73,putts:28.0,sand:59,sgp:0.82,sga:0.92,sgott:0.55,prox125:22,xbird:30,scramble:63,birdie:4.0,drv_eff:82,bogey_avoid:76,
+       fit:4,form:[{l:"Masters 2026: T3 — breakthrough",c:"f-top5"},{l:"Arnold Palmer W 2025",c:"f-win"},{l:"Elite putting on Tour",c:"f-top5"},{l:"Accuracy profile ideal for PGA",c:"f-top5"}],
+       badges:[{t:"Putting elite",b:"bs"},{t:"Masters T3 2026",b:"bs"},{t:"Accuracy ✓",b:"bi"},{t:"No major title yet",b:"bw"}],
+       note:"Top-3 at the 2026 Masters was his best major ever. One of the Tour's finest putters — that profile travels to any parkland major. Accuracy, GIR and bogey avoidance stats all scream PGA contender."},
+      {name:"Wyndham Clark",nat:"United States",rank:22,initials:"WC",color:"#2a7a5a",
+       drive:298,fw:60,gir:70,putts:28.7,sand:60,sgp:0.72,sga:0.88,sgott:0.62,prox125:24,xbird:28,scramble:62,birdie:4.0,drv_eff:81,bogey_avoid:72,
+       fit:3,form:[{l:"2023 US Open champion",c:"f-win"},{l:"Masters 2026 strong contention",c:"f-top10"},{l:"Birdies per round improving",c:"f-top5"},{l:"Tour form still finding level",c:"f-mid"}],
+       badges:[{t:"Major winner ✓",b:"bs"},{t:"Putting ✓",b:"bs"},{t:"Parkland specialist",b:"bi"},{t:"Form inconsistent",b:"bw"}],
+       note:"US Open champion who performs at majors regardless of regular Tour form. Parkland courses suit his precision game better than links. Aronimink's moderate length plays to his controlled distance profile."},
+    ]
+  }
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let curMaj='masters', curTab='profile', wChart=null, wCount=10;
+
+// ── RENDER ─────────────────────────────────────────────────────────────
+function setMajor(m){
+  curMaj=m;
+  document.querySelectorAll('.mbtn').forEach((b,i)=>b.classList.toggle('active',['masters','usopen','theopen','pgachamp'][i]===m));
+  renderAll();
+}
+function setTab(t){
+  curTab=t;
+  const ALL_TABS=['profile','winners','contenders','leaderboard'];
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',ALL_TABS[i]===t));
+  ALL_TABS.forEach(id=>{
+    const el=document.getElementById('tab-'+id);
+    if(!el) return;
+    el.classList.toggle('hidden',id!==t);
+    if(id===t){el.classList.remove('fade-in');void el.offsetWidth;el.classList.add('fade-in')}
+  });
+  if(t==='winners') renderWChart();
+  if(t==='leaderboard') renderLeaderboard();
+}
+function filterW(n){wCount=parseInt(n);renderWinners();renderWChart()}
+function renderAll(){renderProfile();renderWinners();renderContenders();if(curTab==='winners')renderWChart()}
+
+// ── LIVE LEADERBOARD DATA ─────────────────────────────────────────────
+// 2026 Masters R3 — live as of Saturday afternoon April 11 2026
+// Sources: Golf Channel, Yahoo Sports, The Athletic live blogs
+// 2026 Masters — FINAL RESULTS (April 12 2026)
+// McIlroy wins by 1 over Scheffler. 4th back-to-back champion in Masters history.
+const LB = [
+  {pos:'1',  name:'Rory McIlroy',    country:'NIR',r1:67,r2:65,r3:73,r4:71, total:-12,note:'🏆 2026 Masters Champion. 4th back-to-back winner — Nicklaus, Faldo, Tiger, McIlroy. 6th major.',color:'#7ec898'},
+  {pos:'2',  name:'Scottie Scheffler',country:'USA',r1:70,r2:74,r3:65,r4:68,total:-11,note:'Bogey-free weekend. Charged from +2 after R2 to within 1. First bogey-free Masters weekend since 1942.',color:'#a8d8b0'},
+  {pos:'T3', name:'Tyrrell Hatton',  country:'ENG',r1:73,r2:66,r3:66,r4:68, total:-10,note:'Fired two 66s in the tournament. Consistent contender but McIlroy and Scheffler too strong.',color:'#a8d8b0'},
+  {pos:'T3', name:'Justin Rose',     country:'ENG',r1:70,r2:69,r3:69,r4:70, total:-10,note:'Led by 2 on front nine Sunday before bogeys on 11, 12 and 17 ended his charge. 3rd runner-up.',color:'#a8d8b0'},
+  {pos:'T3', name:'Cameron Young',   country:'USA',r1:71,r2:67,r3:65,r4:75, total:-10,note:'Fired joint-lowest R3 (65) to share 54-hole lead. Final round 75 ended title hopes.',color:'#a8d8b0'},
+  {pos:'T3', name:'Russell Henley',  country:'USA',r1:72,r2:68,r3:68,r4:68, total:-10,note:'5th top-10 in last 9 majors. Model of consistency — four solid rounds.',color:'#a8d8b0'},
+  {pos:'T7', name:'Collin Morikawa', country:'USA',r1:74,r2:69,r3:65,r4:69, total:-9, note:'Five consecutive birdies in R4. Battled back injury all week — remarkable performance.',color:'var(--ts)'},
+  {pos:'T7', name:'Sam Burns',       country:'USA',r1:67,r2:71,r3:68,r4:71, total:-9, note:'Co-led after R1. Dramatic double at 2nd Sunday ended title hopes. Magic birdie on 16.',color:'var(--ts)'},
+  {pos:'T9', name:'Max Homa',        country:'USA',r1:71,r2:70,r3:68,r4:70, total:-8, note:'Solid week from start to finish. Best major result. Strong iron play throughout.',color:'var(--ts)'},
+  {pos:'T9', name:'Xander Schauffele',country:'USA',r1:70,r2:74,r3:67,r4:67,total:-8, note:'Battled back from poor R2. Closing 67 his best major round at Augusta.',color:'var(--ts)'},
+  {pos:'T11',name:'Shane Lowry',     country:'IRL',r1:70,r2:69,r3:68,r4:72, total:-7, note:'Hole-in-one on No.6 in R3. Faded Sunday but top-15 finish. Best major form.',color:'var(--ts)'},
+  {pos:'T11',name:'Tommy Fleetwood', country:'ENG',r1:71,r2:68,r3:72,r4:68, total:-7, note:'Consistent performer. R3 wobble cost him contention but recovered well Sunday.',color:'var(--ts)'},
+  {pos:'MC', name:'Bryson DeChambeau',country:'USA',r1:76,r2:78,r3:'MC',r4:null,total:'+10',note:'Triple bogey at 18 on Friday seals fate. LIV form did not carry over.',color:'#e88888'},
+  {pos:'MC', name:'Jon Rahm',        country:'ESP',r1:78,r2:70,r3:'MC',r4:null,total:'+4', note:'Rough R1 (78) but R2 recovery not enough. LIV leader misses the cut.',color:'#e88888'},
+  {pos:'MC', name:'Ludvig Åberg',    country:'SWE',r1:74,r2:74,r3:'MC',r4:null,total:'+4', note:'Two-time Augusta top-10 finisher — disappointing week.',color:'#e88888'},
+];
+
+const WINS_2026 = [
+  {date:'Jan 22–25',event:'The American Express',winner:'Scottie Scheffler',score:'-22',pick:'Masters ✓ / PGA ✓'},
+  {date:'Jan 29–Feb 1',event:'Farmers Insurance Open',winner:'Justin Rose',score:'-13',pick:'All majors ✓'},
+  {date:'Feb 5–8',event:'WM Phoenix Open',winner:'Jacob Bridgeman',score:'-21',pick:'—'},
+  {date:'Feb 12–15',event:'AT&T Pebble Beach Pro-Am',winner:'Cameron Young',score:'-19',pick:'PGA ✓ / Open ~'},
+  {date:'Feb 19–22',event:'The Genesis Invitational',winner:'Rory McIlroy (R/U)',score:'—',pick:'Masters ✓ / All'},
+  {date:'Feb 26–Mar 1',event:'Cognizant Classic',winner:'Harris English',score:'-18',pick:'—'},
+  {date:'Mar 5–8',event:'Arnold Palmer Invitational',winner:'J.J. Spaun',score:'-17',pick:'—'},
+  {date:'Mar 12–15',event:'THE PLAYERS Championship',winner:'Cameron Young',score:'-19',pick:'PGA ✓'},
+  {date:'Mar 19–22',event:'Valspar Championship',winner:'Matt Fitzpatrick',score:'-11',pick:'US Open ✓ / Masters ✓'},
+  {date:'Mar 26–29',event:'Texas Children\'s Houston Open',winner:'Chris Gotterup',score:'-16',pick:'PGA ~'},
+  {date:'Apr 2–5',event:'Valero Texas Open',winner:'Ben Griffin',score:'-17',pick:'—'},
+  {date:'Apr 9–12',event:'MASTERS TOURNAMENT',winner:'Rory McIlroy',score:'-12 (won by 1)',pick:'Masters ✓'},
+];
+
+const WINS_2025 = [
+  {date:'Jan 2–5',event:'The Sentry',winner:'Hideki Matsuyama',score:'-28',pick:'Masters ~'},
+  {date:'Jan 9–12',event:'Sony Open in Hawaii',winner:'Nick Taylor',score:'-22',pick:'—'},
+  {date:'Jan 16–19',event:'The American Express',winner:'Sepp Straka',score:'-26',pick:'PGA ~'},
+  {date:'Jan 22–25',event:'Farmers Insurance Open',winner:'Harris English',score:'-18',pick:'—'},
+  {date:'Jan 30–Feb 2',event:'AT&T Pebble Beach Pro-Am',winner:'Rory McIlroy',score:'-22',pick:'Masters ✓ / All'},
+  {date:'Feb 6–9',event:'WM Phoenix Open',winner:'Thomas Detry',score:'-21',pick:'—'},
+  {date:'Feb 13–16',event:'The Genesis Invitational',winner:'Ludvig Åberg',score:'-14',pick:'Masters ~'},
+  {date:'Feb 20–23',event:'Mexico Open',winner:'Brian Campbell',score:'-20',pick:'—'},
+  {date:'Feb 27–Mar 2',event:'Cognizant Classic',winner:'Joe Highsmith',score:'-20',pick:'—'},
+  {date:'Mar 6–9',event:'Arnold Palmer Invitational',winner:'Russell Henley',score:'-14',pick:'US Open ✓'},
+  {date:'Mar 6–9',event:'Puerto Rico Open',winner:'Karl Vilips',score:'-21',pick:'—'},
+  {date:'Mar 13–16',event:'THE PLAYERS Championship',winner:'Rory McIlroy',score:'-17',pick:'Masters ✓ / All'},
+  {date:'Mar 20–23',event:'Valspar Championship',winner:'Viktor Hovland',score:'-14',pick:'—'},
+  {date:'Mar 27–30',event:'Texas Children\'s Houston Open',winner:'Min Woo Lee',score:'-16',pick:'Open ✓'},
+  {date:'Apr 10–13',event:'MASTERS TOURNAMENT',winner:'Rory McIlroy',score:'-11 (playoff)',pick:'Masters ✓'},
+  {date:'Apr 24–27',event:'RBC Heritage',winner:'Tom McKibbin',score:'-18',pick:'—'},
+  {date:'May 1–4',event:'Zurich Classic',winner:'McIlroy & Lowry',score:'-26',pick:'—'},
+  {date:'May 8–11',event:'Truist Championship',winner:'Sepp Straka',score:'-18',pick:'PGA ~'},
+  {date:'May 8–11',event:'Myrtle Beach Classic',winner:'Ryan Fox',score:'-21',pick:'—'},
+  {date:'May 15–18',event:'PGA CHAMPIONSHIP',winner:'Scottie Scheffler',score:'-11',pick:'Masters ✓ / PGA ✓'},
+  {date:'May 22–25',event:'Charles Schwab Challenge',winner:'Ben Griffin',score:'-16',pick:'—'},
+  {date:'May 29–Jun 1',event:'Memorial Tournament',winner:'Scottie Scheffler',score:'-12',pick:'Masters ✓ / PGA ✓'},
+  {date:'Jun 5–8',event:'RBC Canadian Open',winner:'Ryan Fox',score:'-17',pick:'—'},
+  {date:'Jun 12–15',event:'US OPEN',winner:'J.J. Spaun',score:'-6',pick:'—'},
+  {date:'Jun 26–29',event:'Travelers Championship',winner:'Tommy Fleetwood',score:'-19',pick:'Masters ✓ / All'},
+  {date:'Jul 17–20',event:'THE OPEN CHAMPIONSHIP',winner:'Scottie Scheffler',score:'-12',pick:'Masters ✓ / PGA ✓'},
+  {date:'Aug',event:'BMW Championship',winner:'Scottie Scheffler',score:'-10',pick:'Masters ✓ / PGA ✓'},
+  {date:'Sep',event:'TOUR CHAMPIONSHIP',winner:'Tommy Fleetwood (FedExCup)',score:'+7',pick:'All majors ✓'},
+];
+
+
+function renderProfile(){
+  const m=MAJORS[curMaj];
+  document.getElementById('venue-lbl').textContent=m.venue;
+  document.getElementById('major-insight').textContent=m.insight;
+
+  
+  const c=m.composite;
+  document.getElementById('comp-title').textContent=c.title;
+  document.getElementById('comp-desc').textContent=c.desc;
+  document.getElementById('comp-num').textContent=c.score;
+  document.getElementById('comp-chips').innerHTML=c.chips.map(ch=>`<span class="comp-chip">${ch}</span>`).join('');
+  const offset=270-(270*(c.score/100));
+  setTimeout(()=>{document.getElementById('ring-fill').style.strokeDashoffset=offset},80);
+  document.getElementById('benchmark-cards').innerHTML=m.benchmarks.map(b=>`<div class="mcard" data-tip="${b.l}"><div class="mlbl">${b.l}</div><div class="mval">${b.v}<span class="munit"> ${b.u}</span></div><div class="msub">${b.s}</div></div>`).join('');
+  document.getElementById('stat-importance').innerHTML=m.importance.map(s=>`<div class="imp-row" data-tip="${s.s}"><div class="imp-hdr"><span class="imp-name">${s.s}</span><span class="imp-pct">${s.p}%</span></div><div class="btrack"><div class="bfill" style="width:${s.p}%;background:${s.c}"></div></div></div>`).join('');
+  document.getElementById('course-chars').innerHTML=m.chars.map(c=>`<div class="char-row"><span class="char-lbl">${c.l}</span><span class="badge ${c.b}">${c.v}</span></div>`).join('');
+}
+
+function scoreStr(s){return s===0?'E':s>0?'+'+s:String(s)}
+function color_sgp(v){return v>=0.7?'#7ec898':v>=0.5?'#e8c97a':''}
+function color_sga(v){return v>=1.0?'#7ec898':v>=0.8?'#e8c97a':''}
+function color_bb(v){return v>=28?'#7ec898':''}
+
+function renderWinners(){
+  const ws=MAJORS[curMaj].winners.slice(0,wCount);
+  document.getElementById('winners-body').innerHTML=ws.map(w=>`<tr>
+    <td>${w.yr}</td><td>${w.n}</td>
+    <td style="font-family:'DM Mono',monospace;color:${w.sc<=0?'#7ec898':'#e88888'}">${scoreStr(w.sc)}</td>
+    <td><div class="mbar"><div class="mtrack"><div class="mfill" style="width:${Math.min(100,((w.dr-265)/80*100)).toFixed(0)}%;background:#7b6fe0"></div></div><span class="mval2">${w.dr}</span></div></td>
+    <td><div class="mbar"><div class="mtrack"><div class="mfill" style="width:${w.fw}%;background:#3a8a4c"></div></div><span class="mval2">${w.fw}%</span></div></td>
+    <td><div class="mbar"><div class="mtrack"><div class="mfill" style="width:${w.gir}%;background:#c9a84c"></div></div><span class="mval2">${w.gir}%</span></div></td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px">${w.pu.toFixed(1)}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px">${w.sa}%</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${color_sgp(w.sgp)}">+${w.sgp.toFixed(2)}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${color_sga(w.sga)}">+${w.sga.toFixed(2)}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${w.sgott>=0.7?'#7ec898':w.sgott>=0.5?'#e8c97a':''}">+${w.sgott.toFixed(2)}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px">${w.prox}ft</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${w.xb>=32?'#7ec898':w.xb>=28?'#e8c97a':''}">${w.xb}%</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${color_bb(w.bb)}">${w.bb}%</td>
+  </tr>`).join('');
+
+  // 2025 PGA Tour winners — always shown regardless of major selection
+  function pickColor(pick){
+    if(!pick||pick==='—') return 'var(--tm)';
+    if(pick.includes('✓')) return '#7ec898';
+    return 'var(--gold2)';
+  }
+  const el2025 = document.getElementById('wins2025-body');
+  if(el2025) el2025.innerHTML = WINS_2025.map(w=>`<tr>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--tm);white-space:nowrap">${w.date}</td>
+    <td style="color:${w.event.includes('OPEN')||w.event.includes('MASTERS')||w.event.includes('PGA CHAMP')||w.event.includes('PLAYERS')?'var(--cream)':'var(--ts)'};font-weight:${w.event.includes('OPEN')||w.event.includes('MASTERS')||w.event.includes('PGA CHAMP')||w.event.includes('PLAYERS')?'700':'400'}">${w.event}</td>
+    <td style="color:var(--cream);font-weight:500">${w.winner}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:${w.score.startsWith('-')?'#7ec898':'var(--ts)'}">${w.score}</td>
+    <td style="font-size:11px;font-family:'DM Mono',monospace;color:${pickColor(w.pick)}">${w.pick||'—'}</td>
+  </tr>`).join('');
+}
+
+function renderWChart(){
+  const ws=MAJORS[curMaj].winners.slice(0,wCount).reverse();
+  const ctx=document.getElementById('wChart').getContext('2d');
+  if(wChart)wChart.destroy();
+  wChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:ws.map(w=>w.yr),datasets:[
+      {label:'GIR %',data:ws.map(w=>w.gir),backgroundColor:'rgba(123,111,224,.7)',borderColor:'#7b6fe0',borderWidth:1},
+      {label:'Fairways %',data:ws.map(w=>w.fw),backgroundColor:'rgba(58,138,76,.6)',borderColor:'#3a8a4c',borderWidth:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(7,22,10,.95)',borderColor:'rgba(201,168,76,.3)',borderWidth:1,titleColor:'#c9a84c',bodyColor:'rgba(248,244,234,.8)',padding:10}},
+      scales:{
+        y:{min:40,max:90,ticks:{callback:v=>v+'%',color:'rgba(248,244,234,.35)',font:{family:'DM Mono',size:11}},grid:{color:'rgba(255,255,255,.044)'}},
+        x:{ticks:{autoSkip:false,maxRotation:45,color:'rgba(248,244,234,.35)',font:{family:'DM Mono',size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function fitScore(p,major){
+  let s=0;
+  if(major==='masters') s=(p.gir/80*30)+(p.sand/70*10)+((30-p.putts)/(30-27)*18)+(p.drive/320*14)+(p.scramble/70*12)+(p.sga/1.4*16);
+  else if(major==='usopen') s=(p.fw/75*26)+(p.gir/75*20)+(p.scramble/68*18)+((30.5-p.putts)/3.5*14)+(p.sga/1.3*14)+(p.bogey_avoid/80*8);
+  else if(major==='theopen') s=(p.fw/72*22)+(p.scramble/65*22)+((30-p.putts)/3*18)+(p.drive/320*14)+(p.gir/75*12)+(p.sgp/0.9*12);
+  else s=(p.gir/80*26)+(p.drive/325*18)+((30-p.putts)/3*18)+(p.scramble/68*14)+(p.fw/72*12)+(p.sga/1.4*12);
+  return Math.min(98,Math.max(46,Math.round(s)));
+}
+function fitColor(n){return n>=88?'#44aa6a':n>=78?'#c9a84c':'#7090c0'}
+
+function makeCard(p, major, idx, isOutside){
+  const cs=fitScore(p,major);
+  const fc=fitColor(cs);
+  const outsideClass=isOutside?' outside-pick':'';
+  const outsideLbl=isOutside?`<span class="outside-lbl">Outside Pick</span>`:'';
+  const formHTML=p.form.map(f=>`<span class="fp ${f.c}">${f.l}</span>`).join('');
+  const bHTML=p.badges.map(b=>`<span class="badge ${b.b}" style="font-size:10px">${b.t}</span>`).join('');
+  const dots=[1,2,3,4,5].map(i=>`<div class="fit-dot" style="background:${i<=p.fit?p.color:'rgba(255,255,255,.09)'}"></div>`).join('');
+
+  // Colour-code key stats
+  const girC=p.gir>=74?'good':p.gir>=68?'ok':'';
+  const fwC=p.fw>=67?'good':p.fw>=60?'ok':'';
+  const puttC=p.putts<=28.2?'good':p.putts<=28.7?'ok':'';
+  const sgaC=p.sga>=1.0?'good':p.sga>=0.8?'ok':'';
+
+  return `<div class="ccard${outsideClass}">
+    <div class="card-top-line"></div>
+    <div class="player-hdr">
+      <div class="player-info">
+        <div class="player-name">${p.name}</div>
+        <div class="player-nat">${p.nat}</div>
+        <div class="rank-row">
+          <span class="owgr">OWGR #${p.rank}</span>${outsideLbl}
+        </div>
+        <div class="fit-row">${dots}</div>
+      </div>
+    </div>
+    <div class="form-wrap">
+      <div class="form-lbl">2026 form</div>
+      <div class="form-pills">${formHTML}</div>
+    </div>
+    <div class="stat-grid">
+      <div class="sg-item" data-tip="Drive"><div class="sg-key">Drive</div><div class="sg-val">${p.drive}yds</div></div>
+      <div class="sg-item" data-tip="FW%"><div class="sg-key">FW%</div><div class="sg-val ${fwC}">${p.fw}%</div></div>
+      <div class="sg-item" data-tip="GIR%"><div class="sg-key">GIR%</div><div class="sg-val ${girC}">${p.gir}%</div></div>
+      <div class="sg-item" data-tip="Putts/R"><div class="sg-key">Putts/R</div><div class="sg-val ${puttC}">${p.putts.toFixed(1)}</div></div>
+      <div class="sg-item" data-tip="Sand%"><div class="sg-key">Sand%</div><div class="sg-val">${p.sand}%</div></div>
+      <div class="sg-item" data-tip="Scramble"><div class="sg-key">Scramble</div><div class="sg-val">${p.scramble}%</div></div>
+      <div class="sg-item" data-tip="SG:Putt"><div class="sg-key">SG:Putt</div><div class="sg-val ${p.sgp>=0.7?'good':p.sgp>=0.5?'ok':''}">+${p.sgp.toFixed(2)}</div></div>
+      <div class="sg-item" data-tip="SG:App"><div class="sg-key">SG:App</div><div class="sg-val ${sgaC}">+${p.sga.toFixed(2)}</div></div>
+      <div class="sg-item" data-tip="SG:OTT"><div class="sg-key">SG:OTT</div><div class="sg-val ${p.sgott>=0.75?'good':p.sgott>=0.55?'ok':''}">+${p.sgott.toFixed(2)}</div></div>
+    </div>
+    <div class="extra-stats">
+      <div class="es-item" data-tip="Prox 125–175"><div class="es-k">Prox 125–175</div><div class="es-v">${p.prox125}ft</div></div>
+      <div class="es-item" data-tip="xBirdie%"><div class="es-k">xBirdie%</div><div class="es-v">${p.xbird}%</div></div>
+      <div class="es-item" data-tip="Birdie/Rd"><div class="es-k">Birdie/Rd</div><div class="es-v">${p.birdie.toFixed(1)}</div></div>
+      <div class="es-item" data-tip="Drv Effic"><div class="es-k">Drv Effic</div><div class="es-v">${p.drv_eff}%</div></div>
+      <div class="es-item" data-tip="Bogey Av%"><div class="es-k">Bogey Av%</div><div class="es-v">${p.bogey_avoid}%</div></div>
+    </div>
+    <div class="cbadges">${bHTML}</div>
+    <div class="cnote">${p.note}</div>
+    <div class="cscore-row">
+      <div>
+        <div class="cs-lbl">Course fit</div>
+        <div style="display:flex;gap:3px;margin-top:5px">${[1,2,3,4,5].map(i=>`<div style="width:8px;height:8px;border-radius:50%;background:${i<=p.fit?p.color:'rgba(255,255,255,.08)'}"></div>`).join('')}</div>
+      </div>
+      <div class="cs-num" style="color:${fc}">${cs}<span style="font-size:13px;font-weight:400;color:var(--ts)">/100</span></div>
+    </div>
+  </div>`;
+}
+
+function renderContenders(){
+  const m=MAJORS[curMaj];
+  document.getElementById('cont-insight').textContent=m.contenderInsight;
+  document.getElementById('contender-grid').innerHTML=m.contenders.map((p,i)=>makeCard(p,curMaj,i,false)).join('');
+  document.getElementById('outside-grid').innerHTML=m.outside.map((p,i)=>makeCard(p,curMaj,i+10,true)).join('');
+}
+
+renderAll();
+
+
+function renderLeaderboard(){
+  const sc = s => s===null ? '—' : s;
+  document.getElementById('lb-body').innerHTML = LB.map(p => {
+    const isMC = p.r3==='MC';
+    const topar = typeof p.total === 'number'
+      ? (p.total===0?'E':p.total>0?'+'+p.total:p.total)
+      : p.total;
+    const r3d = isMC ? 'MC' : (p.r3||'—');
+    const r4d = isMC ? '—' : (p.r4||'—');
+    const rounds = [p.r1, p.r2, p.r3, p.r4].filter(Boolean);
+    const total72 = isMC ? '—' : rounds.reduce((a,b)=>a+b,0);
+    return `<tr style="${isMC?'opacity:.45':''}">
+      <td style="font-weight:500;color:var(--gold)">${p.pos}</td>
+      <td style="color:var(--cream);font-weight:500">${p.name}</td>
+      <td style="color:var(--tm);font-size:11px">${p.country}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${p.r1}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${p.r2}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${r3d}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${r4d}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${p.color}">${total72}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${isMC?'#e88888':p.color}">${isMC?'MC':topar}</td>
+      <td style="font-size:11px;color:var(--tm);max-width:220px">${p.note}</td>
+    </tr>`;
+  }).join('');
+}
+
+
+
+// ── TOOLTIP ENGINE ────────────────────────────────────────────────────
+const TIPS = {
+  'Drive':        {n:'Driving Distance',b:'Average yards off the tee measured at designated driving holes. Distance is a genuine weapon on par-5s but accuracy matters far more than power at US Open and links venues where missing fairways is catastrophic.',bm:'Tour avg: ~296 yds. Elite: 305+ yds. Long hitters gain most at Augusta (par-5s) and Aronimink (length).'},
+  'FW%':          {n:'Fairways Hit %',b:'Percentage of fairways found on par-4 and par-5 holes. The single most critical tee-shot metric at the US Open where thick penal rough awaits every missed fairway. Less important at Augusta where the rough is short.',bm:'Tour avg: 60–62%. Elite: 67%+. US Open winners avg 65%. Augusta winners avg only 64% — rough is short so accuracy matters less.'},
+  'GIR%':         {n:'Greens in Regulation %',b:'Percentage of greens reached in regulation (par minus 2). The strongest historical predictor of major scoring — if you\'re on the green in regulation, you have a real birdie chance. Augusta\'s fast, tilted greens are hardest to hold in regulation.',bm:'Tour avg: 65–67%. Masters winners avg 74%. US Open winners avg 68% (firm greens harder to hold). Elite: 73%+.'},
+  'Putts/R':      {n:'Putts Per Round',b:'Average total putts taken per 18-hole round. Includes all putts regardless of how the green was reached. Augusta\'s greens (Stimpmeter 13–14) are the fastest and most undulating in major golf — elite putting is non-negotiable here.',bm:'Tour avg: 28.8–29.0. Elite: below 28.0. Masters winners avg 28.1. US Open winners avg 29.1 (harder surfaces).'},
+  'Sand%':        {n:'Sand Save %',b:'Percentage of times a player gets up-and-down (holes out in 2 shots) from greenside bunkers. Augusta\'s deep pot bunkers on 10, 12, and 16 are particularly punishing. The Open\'s pot bunkers are sometimes unplayable — escape rather than attack.',bm:'Tour avg: 52–55%. Elite: 60%+. Masters winners avg 58%. The Open winners avg only 48% — pot bunkers make sand saves brutally hard.'},
+  'Scramble':     {n:'Scrambling %',b:'Percentage of holes where a player makes par or better after missing the green in regulation. Captures all short game quality — chipping, pitching, bunker play, and flop shots. Particularly important at the US Open where firm greens mean more missed GIRs.',bm:'Tour avg: 58–60%. Elite: 65%+. US Open winners avg 56% (even elite scramblers struggle in penal rough).'},
+  'SG:Putt':      {n:'Strokes Gained: Putting',b:'The gold-standard modern putting metric. Measures how many shots per round a player gains (or loses) vs the field specifically on the greens, using a statistical model based on distance and break. +1.0 means one full shot better than the average tour player per round.',bm:'Tour average: 0.00. Elite: +0.7 or above. Masters winners avg +0.65. A positive SG:Putt at Augusta is almost mandatory to win.'},
+  'SG:App':       {n:'Strokes Gained: Approach',b:'Historically the strongest single-stat predictor of major championship performance. Measures how many shots per round a player gains vs the field specifically on approach shots (50–200 yards). Captures iron accuracy, trajectory, distance control, and spin — everything that separates elite iron players from average ones.',bm:'Tour average: 0.00. Elite: +0.9 or above. Major winners avg +1.05 during winning weeks. Scheffler leads career SG:App at Augusta.'},
+  'SG:OTT':       {n:'Strokes Gained: Off the Tee',b:'A composite metric capturing both distance AND accuracy off the tee in a single number. Compared against all players in the same field. High values can come from distance (Bryson DeChambeau) or a perfect balance of length and accuracy (Rory McIlroy). Most predictive at Augusta and Aronimink where par-5 distance matters.',bm:'Tour average: 0.00. Elite: +0.7 or above. McIlroy currently leads Tour at +0.88. Distance players like DeChambeau often lead this metric.'},
+  'Prox 125–175': {n:'Proximity 125–175 Yards',b:'Average distance to the hole from approach shots hit between 125 and 175 yards from the green — the most critical iron yardage range at all four majors. Closer proximity = shorter putts for birdie. Lower number is better.',bm:'Tour avg: ~26 ft. Elite: 21 ft or closer. Masters & PGA Championship winners avg ~20–22 ft. This range represents the "scoring zone" of approach play.'},
+  'xBirdie%':     {n:'Expected Birdie Rate',b:'The percentage of approach shots that result in a position inside ~15 feet — close enough to be statistically likely to make birdie. A forward-looking indicator of scoring potential that captures quality of iron play better than raw GIR alone.',bm:'Tour avg: ~27%. Elite: 32%+. Players consistently above 34% are in elite birdie-making territory. Masters winners in recent years avg ~32%.'},
+  'Birdie/Rd':    {n:'Birdies Per Round',b:'Average number of birdies or better made per 18-hole round across the season. Reflects attacking intent and scoring ability. Particularly important at the PGA Championship and Masters where par-5 birdies are available, and players who can consistently make 4+ birdies per round have a structural scoring advantage.',bm:'Tour avg: ~3.7. Elite: 4.2+. To win most majors you need 4.0+ birdies per round. Augusta winners avg 4.5+ birdies in winning weeks.'},
+  'Drv Effic':    {n:'Driving Efficiency Index',b:'A proprietary composite score (0–100%) combining driving distance and driving accuracy into a single "efficiency" index. Rewards players who are both long AND accurate — the ideal major championship profile. A player who is very long but wild, or very accurate but short, scores lower than one who balances both.',bm:'Tour avg: ~78%. Elite: 85%+. Scores above 88% indicate exceptional combined tee-shot performance. Morikawa and Fitzpatrick score high here despite shorter distances.'},
+  'Bogey Av%':    {n:'Bogey Avoidance Rate',b:'Percentage of holes played without making bogey or worse. At the US Open, avoiding bogey-or-worse is literally as valuable as making birdies — the course is designed to yield even par as a "good" score. Also reflects course management: smart players avoid trouble even if it means laying up.',bm:'Tour avg: ~72%. Elite: 77%+. US Open winners show 80%+ bogey avoidance during winning weeks. Augusta winners avg ~75% — birdies matter more here.'},
+  // Table column headers
+  'SG:Putt tbl':  {n:'SG: Putting',b:'Strokes gained vs the field on the greens during the winning tournament week.',bm:''},
+  'SG:App tbl':   {n:'SG: Approach',b:'Strokes gained vs the field on approach shots during the winning week. Strongly predicts major winners.',bm:''},
+  'SG:OTT tbl':   {n:'SG: Off the Tee',b:'Strokes gained vs the field on tee shots during the winning week.',bm:''},
+  'Prox125':      {n:'Proximity 125–175',b:'Average distance to hole from approach shots hit in the 125–175 yard range during the winning week. Lower = closer.',bm:''},
+  'xBirdie':      {n:'Expected Birdie Rate',b:'Percentage of approaches resulting in birdie-quality proximity (inside ~15ft) during the winning week.',bm:''},
+  'BB%':          {n:'Bounce-Back %',b:'Percentage of holes where the player made birdie or better immediately following a bogey. Measures mental resilience and the ability to recover from adversity — especially critical at Augusta where momentum swings are dramatic.',bm:'Tour avg: ~22%. Elite major winners avg 28–36% during winning weeks. Augusta winners average 30%+.'},
+  // Profile benchmark cards — matched to data label text
+  'Driving distance':     {n:'Driving Distance',b:'Average yards off the tee. Distance is a weapon on par-5s at Augusta and long PGA Championship venues. Less decisive at US Open and The Open where accuracy matters much more than power.',bm:'Tour avg: ~296 yds. Elite benchmark varies by major — distance matters most at Augusta and Aronimink.'},
+  'Fairways hit':         {n:'Fairways Hit %',b:'The most important tee-shot accuracy metric at the US Open (penal rough), moderately important at The Open (pot bunkers), and least critical at Augusta (short rough). Finding fairways gives approach shots from the short grass.',bm:'Tour avg: 60–62%. US Open: 65%+ ideal. Augusta: even 60% is acceptable due to light rough.'},
+  'GIR %':               {n:'Greens in Regulation %',b:'The #1 historical predictor of major scoring. On the green in regulation = a real birdie chance. Augusta and PGA Championship reward the highest GIR percentages. US Open firm greens make GIR harder to achieve.',bm:'Masters winners avg 74%. PGA Champ winners avg 70%. US Open winners avg 68% — firm greens are harder to hold.'},
+  'Putts per round':      {n:'Putts Per Round',b:'Average putts per 18-hole round. The Masters demands elite putting on the fastest, most undulating greens in major golf. US Open\'s firm, grainy surfaces also challenge putters. The Open\'s links greens require adjustment to different grain and pace.',bm:'Masters winners avg 28.1. US Open winners avg 29.1. Tour avg 28.8–29.0.'},
+  'Sand save %':          {n:'Sand Save %',b:'Getting up-and-down from greenside bunkers. Augusta\'s deep bunkers on 10, 12, and 16 are hazards designed to punish. The Open\'s pot bunkers are sometimes unplayable — the goal becomes escape rather than attacking the flag.',bm:'Masters winners avg 58%. Open winners avg 48% — pot bunkers make sand saves brutally hard. US Open avg 52%.'},
+  'Scrambling %':         {n:'Scrambling %',b:'Making par or better after missing the green. Reflects short game quality — chipping, pitching, bunker play, and touch around the greens. Particularly important at US Open where firm greens and penal rough mean more missed GIRs.',bm:'Elite scrambling: 65%+. US Open winners avg 56% (even elite scrambles struggle in penal rough around hard greens).'},
+  'SG: Putting':          {n:'Strokes Gained: Putting',b:'How many shots per round a player gains on the field specifically on the greens, using a full statistical model. The gold-standard putting metric that accounts for distance, break, and conditions.',bm:'Tour average: 0.00. Elite: +0.7 or above. Masters winners avg +0.65 during winning weeks.'},
+  'SG: Approach':         {n:'Strokes Gained: Approach',b:'The strongest modern predictor of major performance. Measures how much better a player\'s approach shots are vs the average tour player — capturing accuracy, distance control, trajectory, and spin all in one number.',bm:'Tour average: 0.00. Elite: +0.9 or above. Major winners avg +1.0–1.2 during winning weeks.'},
+  'SG: Off-the-Tee':     {n:'Strokes Gained: Off the Tee',b:'Captures both distance and accuracy off the tee in a single metric. Distance players like Bryson DeChambeau and Rory McIlroy lead here, but accurate long hitters like Scottie Scheffler also score well.',bm:'Tour average: 0.00. Elite: +0.7 or above. McIlroy currently leads Tour 2026 at +0.88.'},
+  'Par-5 scoring':        {n:'Par-5 Scoring Average',b:'Average score on par-5 holes. Critical at Augusta with four scoreable par-5s (2, 8, 13, 15). Players who birdie or eagle the par-5s consistently gain 2–3 shots on the field compared to those who just make pars. The 13th and 15th are the primary Sunday scoring opportunities.',bm:'Augusta par-5 winner benchmark: 4.40–4.45 avg. Players averaging below 4.40 on par-5s are gaining a full shot per round on the field.'},
+  'Proximity 125–175':   {n:'Proximity 125–175 Yards',b:'Average proximity to the hole on approach shots from 125–175 yards. The most important iron yardage range at all majors — close shots lead to birdie putts, distant shots lead to two-putts or worse. Lower number is better.',bm:'Tour avg: ~26 ft. Elite: 21 ft or closer. Masters & PGA Championship winners avg ~20–22 ft in winning weeks.'},
+  'Par-4 scoring avg':   {n:'Par-4 Scoring Average',b:'Average score on par-4 holes. Difficult par-4s define the US Open — the course is specifically designed so par-4s are the hardest holes. Making pars on the par-4s while converting par-5 birdies is the winning formula at most majors.',bm:'US Open: even 4.18 avg on par-4s is very good. Augusta: 4.10–4.15 typical for contenders. PGA Champ varies by venue.'},
+  'Bogey avoidance':     {n:'Bogey Avoidance Rate',b:'Percentage of holes played without making bogey or worse. At the US Open, avoiding double-bogeys can be more valuable than making birdies. Smart course management — knowing when to lay up, when to attack — is the key skill this metric reflects.',bm:'Tour avg: ~72%. Elite: 77%+. US Open winners show 80%+ bogey avoidance. Augusta winners avg ~75% — birdies matter more here.'},
+  'Bounce-back %':       {n:'Bounce-Back Rate',b:'Percentage of holes immediately after a bogey where the player makes birdie or better. Measures mental resilience and the ability to recover from adversity. Scheffler leads Tour at 36.5% — significantly ahead of his rivals.',bm:'Tour avg: ~22%. Elite major winners avg 28–36% during winning weeks. Scheffler\'s 36.5% bounce-back rate is historically exceptional.'},
+  'Winning score':       {n:'Winning Score Average',b:'Average score per round during winning weeks at this major over the past 10–15 years. Reflects the overall difficulty of the scoring environment. Augusta allows lower scores than the US Open which often plays at or above even par.',bm:'Augusta avg: 69.8/round. US Open avg: 71.2/round. The Open avg: 69.2/round. PGA Championship avg: 70.1/round.'},
+  'Links top-10 history':{n:'Links Top-10 History',b:'Number of previous top-10 finishes at links-style tournaments (Scottish Open, Irish Open, The Open itself, etc). Links experience cannot be fully captured in standard stats — it is learned through repeated exposure to wind, bounce, pot bunkers, and bump-and-run play.',bm:'Elite: 3+ links top-10s. Players like McIlroy, Fleetwood, MacIntyre, and Lowry have accumulated deep links experience that shows in their versatility.'},
+  'Low ball flight rating':{n:'Low Ball Flight Rating',b:'A qualitative rating of a player\'s ability to keep the ball trajectory below the wind on links courses. A low, piercing ball flight navigates the wind more predictably than a high, ballooning shot. McIlroy\'s natural stinger and Morikawa\'s controlled mid-flight are ideal for links conditions.',bm:'Elite links players: McIlroy, Morikawa, Harman. Higher-ball-flight players (like some US power hitters) struggle in 30mph links winds.'},
+  'Wind score variance': {n:'Wind Score Variance',b:'How much a player\'s scoring fluctuates based on wind conditions. Lower variance = more wind-stable performance. The best links players find ways to score in any wind — the worst players shoot 80 in a storm and 65 in calm. Consistent links players are the most dangerous picks.',bm:'Elite links: variance under 3 strokes per round between calm and windy conditions. Shane Lowry at Portrush in 2019 showed exceptional wind stability.'},
+  'xBirdie rate':        {n:'Expected Birdie Rate',b:'Percentage of approach shots that land close enough to generate a statistically expected birdie conversion. A forward-looking scoring indicator that often predicts performance before raw results catch up.',bm:'Tour avg: ~27%. Elite: 32%+. Players above 34% are in exceptional birdie-making territory for the year.'},
+  '72-hole consistency': {n:'72-Hole Consistency',b:'The ability to maintain high-level performance across all four rounds of a major. Major champions rarely blow up — they are typically in the top 10 of every individual round. Players who have one great day and three average days cannot win majors. Koepka, Scheffler, and McIlroy are the modern standards of 72-hole consistency.',bm:'Elite standard: no round worse than 73 during a winning major week. Scheffler has never shot worse than 72 in a major round where he finished top-5.'},
+  'Par-5 scoring avg':   {n:'Par-5 Scoring Average',b:'Average score on par-5 holes. At Augusta, par-5 birdies on holes 2, 8, 13, and 15 are the primary birdie opportunities. Players who average below 4.45 on par-5s at Augusta are gaining a full shot per round vs those who par them. Distance and positioning from the tee are crucial.',bm:'Augusta: par-5 winners avg 4.40–4.45. Players averaging 4.30 or below are gaining 2+ shots per round on the field from par-5 performance alone.'},
+  'SG: Around-the-Green':{n:'SG: Around the Green',b:'Strokes gained within 30 yards of the green — chips, pitches, bunker shots, and flop shots. More predictive at The Open than any other major because bump-and-run creativity around links greens is so varied. Players who can play along the ground as well as through the air have a significant advantage.',bm:'Tour average: 0.00. Elite: +0.5 or above. Links winners often show exceptional scrambling creativity that standard GIR/scrambling % cannot capture.'},
+  'Proximity FW woods':  {n:'FW Wood Proximity',b:'Average proximity to the hole from fairway wood approach shots (typically 200+ yards). More important at links courses where long par-4 second shots from uneven fairways are common. Also relevant at long PGA Championship venues like Aronimink.',bm:'Tour avg: ~32 ft. Elite: 28 ft or closer. Players with elite long-iron precision — like Morikawa and McIlroy — score well here.'},
+  'Driving efficiency':  {n:'Driving Efficiency Index',b:'A composite score (0–100%) combining driving distance and accuracy. Rewards players who hit it both long AND straight — the ideal major championship profile. A player 30 yards longer but missing every fairway scores lower than one who is slightly shorter but consistently finding the short grass.',bm:'Tour avg: ~78%. Elite: 85%+. Scores above 88% indicate exceptional combined tee-shot performance — the sweet spot for any major.'},
+  'Low ball flight':     {n:'Low Ball Flight',b:'Ability to keep tee and approach shots below the wind on links venues. Players who naturally flight the ball lower — McIlroy, Morikawa, Clarke — have a structural advantage in windy links conditions. High-ball hitters often see their shots ballooned by gusty winds.',bm:'Elite links ball flight: McIlroy, Morikawa, Harman, Lowry. High-ball hitters (many American power players) face the biggest adjustment challenge at links venues.'},
+  'Birdies per round':   {n:'Birdies Per Round',b:'Average birdies per round across the full season. Essential at Augusta (par-5 birdie opportunities) and Aronimink (multiple scoring holes). The US Open rewards bogey avoidance more than birdie-making, so this stat matters less there.',bm:'Tour avg: ~3.7. Elite: 4.2+. Augusta and PGA Championship winners typically average 4.0–4.5 birdies per round in winning weeks.'},
+};
+
+// Shared tooltip element
+const ttEl = document.getElementById('tt');
+const ttName = document.getElementById('tt-name');
+const ttBody = document.getElementById('tt-body');
+const ttBench = document.getElementById('tt-bench');
+
+function showTip(e, key) {
+  const tip = TIPS[key];
+  if (!tip) return;
+  ttName.textContent = tip.n;
+  ttBody.textContent = tip.b;
+  ttBench.textContent = tip.bm || '';
+  ttBench.style.display = tip.bm ? 'block' : 'none';
+  moveTip(e);
+  ttEl.classList.add('show');
+}
+function moveTip(e) {
+  const pad = 16, tw = 250, th = ttEl.offsetHeight || 120;
+  let x = e.clientX + pad;
+  let y = e.clientY - th / 2;
+  if (x + tw > window.innerWidth - 10) x = e.clientX - tw - pad;
+  if (y < 8) y = 8;
+  if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8;
+  ttEl.style.left = x + 'px';
+  ttEl.style.top = y + 'px';
+}
+function hideTip() { ttEl.classList.remove('show'); }
+
+// Event delegation — works on all dynamically rendered content
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (el) showTip(e, el.dataset.tip);
+  else hideTip();
+});
+document.addEventListener('mousemove', e => {
+  if (ttEl.classList.contains('show')) moveTip(e);
+});
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('[data-tip]')) hideTip();
+});
+</script>
+</body>
+</html>
