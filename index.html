@@ -263,22 +263,22 @@ footer{border-top:.5px solid var(--bdr);padding:28px 0 0;margin-top:56px;display
 
     <!-- MAJOR NAV — 2×2 quadrant in header right -->
     <nav class="major-nav" id="majorNav" style="flex:0 0 auto;width:min(420px,45vw);align-self:center">
-      <button class="mbtn active" onclick="setMajor('masters')">
+      <button class="mbtn active" data-major="masters" onclick="setMajor('masters')">
         <div class="mbtn-tag">April · Augusta</div>
         <div class="mbtn-name">The Masters</div>
         <div class="mbtn-venue">Augusta National GC</div>
       </button>
-      <button class="mbtn" onclick="setMajor('pgachamp')">
+      <button class="mbtn" data-major="pgachamp" onclick="setMajor('pgachamp')">
         <div class="mbtn-tag">May · Aronimink 2026</div>
         <div class="mbtn-name">PGA Championship</div>
         <div class="mbtn-venue">Newtown Square, PA</div>
       </button>
-      <button class="mbtn" onclick="setMajor('usopen')">
+      <button class="mbtn" data-major="usopen" onclick="setMajor('usopen')">
         <div class="mbtn-tag">June · Various</div>
         <div class="mbtn-name">US Open</div>
         <div class="mbtn-venue">USGA Championship</div>
       </button>
-      <button class="mbtn" onclick="setMajor('theopen')">
+      <button class="mbtn" data-major="theopen" onclick="setMajor('theopen')">
         <div class="mbtn-tag">July · Links</div>
         <div class="mbtn-name">The Open</div>
         <div class="mbtn-venue">Links courses, UK</div>
@@ -543,6 +543,7 @@ const MAJORS = {
       {l:"Elevation changes",v:"Significant",b:"bw"},{l:"Green firmness",v:"Very firm",b:"bd"},
     ],
     winners:[
+      {yr:2026,n:"Rory McIlroy",sc:-12,dr:315,fw:58,gir:74,pu:28.1,sa:60,sgp:0.82,sga:0.95,sgott:0.99,prox:21,xb:34,bb:31},
       {yr:2025,n:"Rory McIlroy",sc:-11,dr:302,fw:67,gir:76,pu:28.2,sa:58,sgp:0.82,sga:0.91,sgott:0.72,prox:21,xb:34,bb:31},
       {yr:2024,n:"Scottie Scheffler",sc:-11,dr:298,fw:72,gir:79,pu:27.8,sa:63,sgp:0.45,sga:1.32,sgott:0.58,prox:19,xb:38,bb:36},
       {yr:2023,n:"Jon Rahm",sc:-12,dr:295,fw:65,gir:78,pu:27.5,sa:55,sgp:0.90,sga:1.10,sgott:0.62,prox:20,xb:36,bb:28},
@@ -559,7 +560,7 @@ const MAJORS = {
       {yr:2012,n:"Bubba Watson",sc:-3,dr:309,fw:58,gir:70,pu:28.7,sa:53,sgp:0.35,sga:0.80,sgott:0.62,prox:27,xb:25,bb:20},
       {yr:2011,n:"Charl Schwartzel",sc:-14,dr:290,fw:71,gir:73,pu:28.2,sa:57,sgp:0.68,sga:0.95,sgott:0.44,prox:23,xb:30,bb:28},
     ],
-    contenderInsight:"McIlroy leads the 2026 Masters through 36 holes at -12, the largest 36-hole lead in Masters history. Augusta rewards elite ball-strikers with elite putting. GIR and the flat-stick are the twin engines of the green jacket.",
+    contenderInsight:"Rory McIlroy won the 2026 Masters wire-to-wire, becoming a back-to-back champion and joining Nicklaus, Faldo and Tiger as consecutive Masters winners. Augusta rewards elite ball-strikers with elite putting — GIR and SG:Approach are the twin engines of the green jacket.",
     contenders:[
       {name:"Rory McIlroy",nat:"Northern Ireland",rank:2,initials:"RM",color:"#2e5fa3",
        drive:315,fw:58,gir:74,putts:28.1,sand:60,sgp:0.82,sga:0.95,sgott:0.99,prox125:21,xbird:34,scramble:63,birdie:4.4,drv_eff:81,bogey_avoid:74,
@@ -983,7 +984,7 @@ let curMaj='masters', curTab='profile', wChart=null, wCount=10;
 // ── RENDER ─────────────────────────────────────────────────────────────
 function setMajor(m){
   curMaj=m;
-  document.querySelectorAll('.mbtn').forEach((b,i)=>b.classList.toggle('active',['masters','usopen','theopen','pgachamp'][i]===m));
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.major===m));
   renderAll();
 }
 function setTab(t){
